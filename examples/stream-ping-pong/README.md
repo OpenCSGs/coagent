@@ -16,10 +16,10 @@ Start a server in one terminal:
 python examples/stream-ping-pong/server.py
 ```
 
-Finally, start a client in another terminal.
+Then communicate with the agent in another terminal:
 
 ```bash
-python examples/stream-ping-pong/client.py
+coagent stream_server -H type:Ping --stream -F '.content.content' --oneline
 ```
 
 
@@ -48,23 +48,5 @@ python examples/stream-ping-pong/server.py --server http://localhost:8000
 Finally, start a client in another terminal.
 
 ```bash
-python examples/stream-ping-pong/client.py --server http://localhost:8000
-```
-
-or mimic the client behavior by using cURL:
-
-```bash
-curl -N -XPOST http://localhost:8000/publish_multi \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "addr": {
-    "name": "stream_server",
-    "id": "e6516e77a4cc442796e05f3ebff0b367"
-  },  
-  "msg": {
-    "header": {
-      "type": "Ping"
-    }
-  }  
-}'
+coagent stream_server -H type:Ping --stream -F '.content.content' --oneline --server http://localhost:8000
 ```

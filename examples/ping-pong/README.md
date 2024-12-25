@@ -14,10 +14,10 @@ Start a server in one terminal:
 python examples/ping-pong/server.py
 ```
 
-Finally, start a client in another terminal.
+Then communicate with the agent in another terminal:
 
 ```bash
-python examples/ping-pong/client.py
+coagent server -H type:Ping
 ```
 
 
@@ -43,8 +43,8 @@ Then start a server in one terminal:
 python examples/ping-pong/server.py --server http://localhost:8000
 ```
 
-Finally, start a client in another terminal.
+Finally, communicate with the agent in another terminal:
 
 ```bash
-python examples/ping-pong/client.py --server http://localhost:8000
+coagent server -H type:Ping --server http://localhost:8000
 ```
