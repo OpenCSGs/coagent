@@ -4,7 +4,7 @@ An experimental agent framework.
 
 
 <p align="center">
-<img src="assets/coagent-overview.png" height="800">
+<img src="assets/coagent-overview.png" height="600">
 </p>
 
 
@@ -55,9 +55,66 @@ docker run -p 4222:4222 --name nats-server -ti nats:latest
 
 ## Installation
 
+```bash
+pip install git+https://github.com/OpenCSGs/coagent.git
+```
+
+
+## Quick Start
+
+Create a Pong agent:
+
+```python
+import asyncio
+
+from coagent.core import (
+    BaseAgent,
+    Context,
+    handler,
+    idle_loop,
+    Message,
+    new,
+)
+from coagent.runtimes import NATSRuntime
+
+
+class Ping(Message):
+    pass
+
+
+class Pong(Message):
+    pass
+
+
+class Server(BaseAgent):
+    """The Pong Server."""
+
+    @handler
+    async def handle(self, msg: Ping, ctx: Context) -> Pong:
+        """Handle the Ping message and return a Pong message."""
+        return Pong()
+
+
+async def main():
+    async with NATSRuntime.from_servers("nats://localhost:4222") as runtime:
+        await runtime.register("server", new(Server))
+        await idle_loop()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Run the agent:
 
 ```bash
-poetry install
+python pong.py
+```
+
+Communicate with the agent:
+
+```bash
+TODO
 ```
 
 
