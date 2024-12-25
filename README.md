@@ -114,7 +114,7 @@ python pong.py
 Communicate with the agent:
 
 ```bash
-TODO
+coagent server -H type:Ping
 ```
 
 
