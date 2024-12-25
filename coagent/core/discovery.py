@@ -252,13 +252,12 @@ class DiscoveryServer(BaseAgent):
     async def start(self) -> None:
         """Since discovery server is a special agent, we need to start it in a different way."""
 
+        # Subscribe the agent to its own address.
+        self._sub = await self.channel.subscribe(self.address, handler=self.receive)
+
         # Upon startup, the current discovery server has no agent-subscriptions.
         # Therefore, it's necessary to synchronize the existing agent-subscriptions
         # from other discovery servers.
-        #
-        # Note that to avoid receiving the _SynchronizeQuery message sent by
-        # itself, the discovery server synchronizes with other discovery servers
-        # before subscribing to its own address.
 
         async def receive(raw: RawMessage) -> None:
             # Gather
@@ -284,9 +283,6 @@ class DiscoveryServer(BaseAgent):
             await asyncio.sleep(0.2)  # TODO: Choose a better timeout.
         finally:
             await sub.unsubscribe()
-
-        # Subscribe the agent to its own address.
-        self._sub = await self.channel.subscribe(self.address, handler=self.receive)
 
     async def stop(self) -> None:
         """Since discovery server is a special agent, we need to stop it in a different way."""
