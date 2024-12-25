@@ -121,7 +121,7 @@ Communicate with the agent:
 coagent server -H type:Ping
 ```
 
-### LLM-based Agent
+### Chat Agent (LLM-based)
 
 Create a Translator agent:
 
@@ -139,7 +139,7 @@ from coagent.runtimes import NATSRuntime
 class Translator(ChatAgent):
     """The translator agent."""
 
-    system="You are a professional translator that can translate Chinese to English."
+    system = "You are a professional translator that can translate Chinese to English."
 
     client = ModelClient(
         model=os.getenv("MODEL_NAME"),
