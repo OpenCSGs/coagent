@@ -21,18 +21,18 @@ An experimental agent framework.
         - [x] Sequential
     - [x] Dynamic orchestration
         - [x] Dynamic Triage
-        - [x] Handoffs (Temporary support)
+        - [x] Handoffs (based on async Swarm)
         - [ ] Group Chat
 - [x] Runtime
     - [x] NATSRuntime (NATS-based Distributed Runtime)
         - [ ] Using NATS [JetStream][2]
     - [x] HTTPRuntime (HTTP-based Distributed Runtime)
     - [x] LocalRuntime (In-process Runtime)
-- [x] Multi-language support
-    - [x] [CoS (Coagent as a Service)](coagent/cos)
-    - [x] Python
-    - [ ] Go
-    - [ ] Rust (Edge/Cloud Native)
+- [x] [CoS](coagent/cos) (Multi-language support)
+    - [x] [Python](examples/cos/cos.py)
+    - [x] [Node.js](examples/cos/cos.js)
+    - [x] [Go](examples/cos/goagent)
+    - [ ] Rust
 - [ ] Cross-language support
     - [ ] Protocol Buffers
 
@@ -62,7 +62,7 @@ pip install git+https://github.com/OpenCSGs/coagent.git
 
 ## Quick Start
 
-Create a Pong agent:
+Create a Ping-pong agent:
 
 ```python
 import asyncio
@@ -87,7 +87,7 @@ class Pong(Message):
 
 
 class Server(BaseAgent):
-    """The Pong Server."""
+    """The Ping-pong agent."""
 
     @handler
     async def handle(self, msg: Ping, ctx: Context) -> Pong:
