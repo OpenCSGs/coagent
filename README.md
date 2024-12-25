@@ -65,6 +65,8 @@ pip install git+https://github.com/OpenCSGs/coagent.git
 Create a Ping-pong agent:
 
 ```python
+# server.py
+
 import asyncio
 
 from coagent.core import (
@@ -108,7 +110,7 @@ if __name__ == "__main__":
 Run the agent:
 
 ```bash
-python pong.py
+python server.py
 ```
 
 Communicate with the agent:
