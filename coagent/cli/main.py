@@ -3,12 +3,13 @@ import asyncio
 import uuid
 
 from coagent.core import Address, RawMessage, set_stderr_logger
+from coagent.core.exceptions import BaseError
 from coagent.runtimes import NATSRuntime, HTTPRuntime
 
 
-def make_msg(header: list[str], data: str | None) -> RawMessage:
+def make_msg(header: list[str], data: str) -> RawMessage:
     header = dict([h.split(":", 1) for h in header])
-    content = data.encode() if data else b""
+    content = data.encode()
     return RawMessage(header=header, content=content)
 
 
@@ -24,14 +25,17 @@ async def run(server: str, auth: str, agent: str, msg: RawMessage, stream: bool)
 
     async with runtime:
         addr = Address(name=agent, id=session_id)
-        if not stream:
-            response = await runtime.channel.publish(
-                addr, msg, request=True, timeout=10
-            )
-            print(response.encode())
-        else:
-            async for chunk in runtime.channel.publish_multi(addr, msg):
-                print(chunk.encode())
+        try:
+            if not stream:
+                response = await runtime.channel.publish(
+                    addr, msg, request=True, timeout=10
+                )
+                print(response.encode())
+            else:
+                async for chunk in runtime.channel.publish_multi(addr, msg):
+                    print(chunk.encode())
+        except BaseError as exc:
+            print(f"Error: {exc}")
 
 
 def main():
@@ -40,7 +44,7 @@ def main():
         "agent", type=str, help="The type of the agent to communicate with."
     )
     parser.add_argument(
-        "-d", "--data", type=str, help="The message body (in form of JSON)."
+        "-d", "--data", type=str, default="", help="The message body (in form of JSON)."
     )
     parser.add_argument(
         "-H", "--header", type=str, action="append", help="The message header."
@@ -62,7 +66,7 @@ def main():
         parser.error(f"At least one header (-H/--header) is required.")
 
     set_stderr_logger(args.level)
-    msg = make_msg(args.header or [], args.data or [])
+    msg = make_msg(args.header, args.data)
     asyncio.run(run(args.server, args.auth, args.agent, msg, args.stream))
 
 
