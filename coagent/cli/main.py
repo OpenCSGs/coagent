@@ -1,6 +1,9 @@
 import argparse
 import asyncio
+import json
 import uuid
+
+import jq
 
 from coagent.core import Address, RawMessage, set_stderr_logger
 from coagent.core.exceptions import BaseError
@@ -13,7 +16,31 @@ def make_msg(header: list[str], data: str) -> RawMessage:
     return RawMessage(header=header, content=content)
 
 
-async def run(server: str, auth: str, agent: str, msg: RawMessage, stream: bool):
+def jq_filter(data: dict, filter: str) -> str:
+    return jq.compile(filter).input(data).first()
+
+
+def print_msg(msg: RawMessage, oneline: bool, filter: str) -> None:
+    output = msg.encode()
+
+    content = output.get("content")
+    if content:
+        # To make jq happy, we need to convert JSON bytes to Python dict.
+        output["content"] = json.loads(content)
+
+    end = "\n" if not oneline else ""
+    print(jq_filter(output, filter), flush=True, end=end)
+
+
+async def run(
+    server: str,
+    auth: str,
+    agent: str,
+    msg: RawMessage,
+    stream: bool,
+    oneline: bool,
+    filter: str,
+):
     session_id = uuid.uuid4().hex
 
     if server.startswith("nats://"):
@@ -30,10 +57,10 @@ async def run(server: str, auth: str, agent: str, msg: RawMessage, stream: bool)
                 response = await runtime.channel.publish(
                     addr, msg, request=True, timeout=10
                 )
-                print(response.encode())
+                print_msg(response, oneline, filter)
             else:
                 async for chunk in runtime.channel.publish_multi(addr, msg):
-                    print(chunk.encode())
+                    print_msg(chunk, oneline, filter)
         except BaseError as exc:
             print(f"Error: {exc}")
 
@@ -44,22 +71,50 @@ def main():
         "agent", type=str, help="The type of the agent to communicate with."
     )
     parser.add_argument(
-        "-d", "--data", type=str, default="", help="The message body (in form of JSON)."
+        "-d",
+        "--data",
+        type=str,
+        default="",
+        help="The message body in form of JSON string. (Defaults to %(default)r)",
     )
     parser.add_argument(
         "-H", "--header", type=str, action="append", help="The message header."
     )
-    parser.add_argument("--stream", action="store_true", help="Whether in stream mode.")
+    parser.add_argument(
+        "--stream",
+        action="store_true",
+        help="Whether in stream mode. (Defaults to %(default)r)",
+    )
+    parser.add_argument(
+        "--oneline",
+        action="store_true",
+        help="Whether to output stream messages in one line. This option only works in stream mode. (Defaults to %(default)r)",
+    )
+    parser.add_argument(
+        "-F",
+        "--filter",
+        type=str,
+        default=".",
+        help="Output filter compatible with jq. (Defaults to %(default)r)",
+    )
     parser.add_argument(
         "--server",
         type=str,
         default="nats://localhost:4222",
-        help="The runtime server address.",
+        help="The runtime server address. (Defaults to %(default)r)",
     )
     parser.add_argument(
-        "--auth", type=str, default="", help="The runtime server authentication token."
+        "--auth",
+        type=str,
+        default="",
+        help="The runtime server authentication token. (Defaults to %(default)r)",
     )
-    parser.add_argument("--level", type=str, default="ERROR", help="The logging level.")
+    parser.add_argument(
+        "--level",
+        type=str,
+        default="ERROR",
+        help="The logging level. (Defaults to %(default)r)",
+    )
     args = parser.parse_args()
 
     if not args.header:
@@ -67,7 +122,17 @@ def main():
 
     set_stderr_logger(args.level)
     msg = make_msg(args.header, args.data)
-    asyncio.run(run(args.server, args.auth, args.agent, msg, args.stream))
+    asyncio.run(
+        run(
+            args.server,
+            args.auth,
+            args.agent,
+            msg,
+            args.stream,
+            args.oneline,
+            args.filter,
+        )
+    )
 
 
 if __name__ == "__main__":
