@@ -19,7 +19,7 @@ python examples/translator/translator.py
 Finally, communicate with the agent using the `coagent` CLI:
 
 ```bash
-coagent translator -H type:ChatHistory -d '{"messages":[{"role":"user","content":"你好"}]}' --stream -F '.content.content' --oneline
+coagent translator -H type:ChatHistory -d '{"messages":[{"role":"user","content":"你好"}]}' --chat
 ```
 
 or start a more-friendly rich client in another terminal.

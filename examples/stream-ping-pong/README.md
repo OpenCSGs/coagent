@@ -19,7 +19,7 @@ python examples/stream-ping-pong/server.py
 Then communicate with the agent in another terminal:
 
 ```bash
-coagent stream_server -H type:Ping --stream -F '.content.content' --oneline
+coagent stream_server -H type:Ping --chat
 ```
 
 
@@ -48,5 +48,5 @@ python examples/stream-ping-pong/server.py --server http://localhost:8000
 Finally, start a client in another terminal.
 
 ```bash
-coagent stream_server -H type:Ping --stream -F '.content.content' --oneline --server http://localhost:8000
+coagent stream_server -H type:Ping --chat --server http://localhost:8000
 ```

@@ -173,7 +173,7 @@ python translator.py
 Communicate with the agent:
 
 ```bash
-coagent translator -H type:ChatHistory -d '{"messages":[{"role":"user","content":"你好"}]}' --stream -F '.content.content' --oneline
+coagent translator -H type:ChatHistory -d '{"messages":[{"role":"user","content":"你好"}]}' --chat
 ```
 
 

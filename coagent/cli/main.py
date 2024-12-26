@@ -98,6 +98,11 @@ def main():
         help="Output filter compatible with jq. (Defaults to %(default)r)",
     )
     parser.add_argument(
+        "--chat",
+        action="store_true",
+        help="This is a shorthand for \"--stream -F '.content.content' --oneline\" used together.",
+    )
+    parser.add_argument(
         "--server",
         type=str,
         default="nats://localhost:4222",
@@ -119,6 +124,11 @@ def main():
 
     if not args.header:
         parser.error(f"At least one header (-H/--header) is required.")
+
+    if args.chat:
+        args.stream = True
+        args.oneline = True
+        args.filter = ".content.content"
 
     set_stderr_logger(args.level)
     msg = make_msg(args.header, args.data)
