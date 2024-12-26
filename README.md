@@ -1,6 +1,6 @@
 # Coagent
 
-An experimental agent framework.
+An open-source framework for building distributed, scalable, and collaborative multi-agent applications.
 
 
 <p align="center">
