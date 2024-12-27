@@ -6,7 +6,7 @@ authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
 python = ">=3.10.0,<3.14"
-pydantic = "2.5.2"
+pydantic = ">=2.7.0"
 openai = "1.52.1"
 nats-py = "2.9.0"
 textual = "0.85.1"
