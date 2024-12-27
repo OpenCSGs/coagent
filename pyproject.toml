@@ -1,3 +1,10 @@
+[project]
+name = "coagent"
+version = "0.0.1"
+description = ""
+authors = ["Your Name <you@example.com>"]
+requires-python = ">=3.10"
+
 [tool.poetry]
 name = "coagent"
 version = "0.0.1"
@@ -25,12 +32,54 @@ useLibraryCodeForTypes = true
 exclude = [".cache"]
 
 [tool.ruff]
-# https://beta.ruff.rs/docs/configuration/
-select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
-ignore = ['W291', 'W292', 'W293']
+# https://docs.astral.sh/ruff/configuration/
+line-length = 120
+extend-exclude = ['coagent/agents/aswarm']
+
+[tool.ruff.format]
+exclude = ['coagent/agents/aswarm']
+
+[tool.ruff.lint]
+select = [
+    'F',      # Pyflakes
+    'E',      # pycodestyle (Error)
+    # 'I',      # isort
+    # 'D',      # pydocstyle
+    # 'UP',     # pyupgrade
+    'YTT',    # flake8-2020
+    'B',      # flake8-bugbear
+    'T10',    # flake8-debugger
+    # 'T20',    # flake8-print
+    'C4',     # flake8-comprehensions
+    'PYI006', # flake8-pyi
+    'PYI062', # flake8-pyi
+    'PYI063', # flake8-pyi
+    'PYI066', # flake8-pyi
+]
+ignore = [
+    'B007',
+    'B011',
+    'B012',
+    'B028',
+    'B904',
+    'C401',
+    'C408',
+    'E501',
+    'F401',
+    'F841',
+]
 
 [tool.poetry.scripts]
 coagent = "coagent.cli:main.main"
+
+[dependency-groups]
+linting = [
+    "ruff",
+]
+testing = [
+    "pytest",
+    "pytest-cov",
+]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
