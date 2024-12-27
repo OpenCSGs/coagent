@@ -15,5 +15,5 @@ lint: .uv
 	uv run ruff format --check $(sources)
 
 .PHONY: test  ## Run all tests
-test:
-	pytest --durations=10
+test: .uv
+	uv run pytest --durations=10

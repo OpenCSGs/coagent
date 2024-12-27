@@ -33,8 +33,7 @@ exclude = [".cache"]
 
 [tool.ruff]
 # https://docs.astral.sh/ruff/configuration/
-line-length = 120
-extend-exclude = ['coagent/agents/aswarm']
+exclude = ['coagent/agents/aswarm']
 
 [tool.ruff.format]
 exclude = ['coagent/agents/aswarm']
@@ -58,6 +57,7 @@ select = [
 ]
 ignore = [
     'B007',
+    'B008',
     'B011',
     'B012',
     'B028',
