@@ -1,4 +1,5 @@
 # Coagent
+[![CI](https://github.com/OpenCSGs/coagent/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenCSGs/coagent/actions?query=event%3Apush+branch%3Amain+workflow%3ACI)
 
 An open-source framework for building distributed, scalable, and collaborative multi-agent applications.
 
