@@ -6,6 +6,7 @@ import re
 from typing import Any, AsyncIterator, Callable
 
 from coagent.core import Address, BaseAgent, Context, handler, logger
+from pydantic_core import PydanticUndefined
 from pydantic.fields import FieldInfo
 
 from .aswarm import Agent as SwarmAgent, Swarm
@@ -39,14 +40,10 @@ def confirm(template: str):
             if ctx and not RunContext(ctx).user_confirmed:
                 # We assume that all meaningful arguments (includes `ctx` but
                 # excepts possible `self`) are keyword arguments. Therefore,
-                # here we use kwargs as the source of template variables.
-                tmpl_vars = {
-                    k: v.default if isinstance(v, FieldInfo) else v
-                    for k, v in kwargs.items()
-                }
+                # here we use kwargs directly as the template variables.
                 return ChatMessage(
                     role="assistant",
-                    content=template.format(**tmpl_vars),
+                    content=template.format(**kwargs),
                     type="confirm",
                     to_user=True,
                 )
@@ -94,6 +91,19 @@ def wrap_error(func):
     @functools.wraps(func)
     async def run(*args: Any, **kwargs: Any) -> ChatMessage | str:
         try:
+            # Fill in the missing arguments with default values if possible.
+            #
+            # Note that we assume that all meaningful arguments (includes `ctx`
+            # but excepts possible `self`) are keyword arguments.
+            sig = inspect.signature(func)
+            for name, param in sig.parameters.items():
+                if name not in kwargs and isinstance(param.default, FieldInfo):
+                    default = param.default.default
+                    if default is PydanticUndefined:
+                        raise ValueError(f"Missing required argument {name!r}")
+                    else:
+                        kwargs[name] = default
+
             # Note that we assume that the tool is not an async generator,
             # so we always use `await` here.
             return await func(*args, **kwargs)

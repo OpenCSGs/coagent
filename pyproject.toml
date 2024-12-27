@@ -78,6 +78,7 @@ linting = [
 ]
 testing = [
     "pytest",
+    "pytest-asyncio",
     "pytest-cov",
 ]
 
