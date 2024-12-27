@@ -91,10 +91,3 @@ def pretty_trace_tool_call(name: str, args: dict[str, any]):
     logger.opt(colors=True).trace(
         f"<green>{name}</green><magenta>({args_str})</magenta>"
     )
-
-
-def get_nats_servers():
-    NATS_SERVERS = os.environ.get("NATS_SERVERS", None)
-    if NATS_SERVERS and len(NATS_SERVERS) > 0:
-        NATS_SERVERS = NATS_SERVERS.split(",")
-    return NATS_SERVERS

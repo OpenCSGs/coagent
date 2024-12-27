@@ -23,13 +23,13 @@ node examples/cos/cos.js
 Finally, start a ping-pong client in the third terminal:
 
 ```bash
-python examples/ping-pong/client.py
+coagent server -H type:Ping
 ```
 
 or start a stream-ping-pong client:
 
 ```bash
-python examples/stream-ping-pong/client.py
+coagent stream_server -H type:Ping --chat
 ```
 
 
@@ -50,27 +50,33 @@ python examples/cos/cos.py
 Finally, start a ping-pong client in the third terminal:
 
 ```bash
-python examples/ping-pong/client.py
+coagent server -H type:Ping
 ```
 
 or start a stream-ping-pong client:
 
 ```bash
-python examples/stream-ping-pong/client.py
+coagent stream_server -H type:Ping --chat
 ```
 
 ### Run Go Agent
 
-Build Go agent:
+Start the CoS server in one terminal:
+
+```bash
+python coagent/cos/app.py
+```
+
+Then build and run the Go agent:
 
 ```bash
 cd examples/cos/goagent
 go build
+./goagent
 ```
 
-Run a Go agent in one terminal:
+Finally, start a ping-pong client in the third terminal:
 
 ```bash
-cd examples/cos/goagent
-./goagent
+coagent server -H type:Ping
 ```
