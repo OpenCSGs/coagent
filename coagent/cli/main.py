@@ -123,7 +123,7 @@ def main():
     args = parser.parse_args()
 
     if not args.header:
-        parser.error(f"At least one header (-H/--header) is required.")
+        parser.error("At least one header (-H/--header) is required.")
 
     if args.chat:
         args.stream = True
