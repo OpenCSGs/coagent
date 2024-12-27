@@ -40,7 +40,7 @@ export AZURE_API_KEY=<YOUR API KEY>
 python examples/opencsg/csghub.py team1.csghub
 ```
 
-Then search in the client terminal and you will get a professional answer from CSGHub:
+Then search in the client terminal, then you will get a professional answer from CSGHub:
 
 ```bash
 python examples/rich_client.py opencsg

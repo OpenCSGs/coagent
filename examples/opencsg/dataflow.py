@@ -21,9 +21,11 @@ class DataFlow(ChatAgent):
         """Search datasets by the given name."""
         async with httpx.AsyncClient() as client:
             resp = await client.get(
-                "https://hub.opencsg-stg.com/api/v1/datasets",
+                "https://hub.opencsg.com/api/v1/datasets",
                 params=dict(search=name),
             )
+            if resp.status_code != 200:
+                return f"Error: {resp.text}"
             datasets = resp.json()["data"]
             if not datasets:
                 return "Sorry, no datasets found."
