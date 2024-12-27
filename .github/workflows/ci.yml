@@ -12,7 +12,6 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     name: Lint ${{ matrix.python-version }}
-    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -26,7 +25,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --group testing
+        run: uv sync --group linting
 
       - name: Run formatting
         run: uv run ruff format --diff
