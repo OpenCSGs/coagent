@@ -223,7 +223,7 @@ class HTTPChannelSubscription(Subscription):
                     # Send the error as a message.
                     await self._handler(exc.encode_message().encode())
                     break
-                except asyncio.CancelledError as exc:
+                except asyncio.CancelledError:
                     # User cancelled, close the client and exit.
                     await client.aclose()
                     # TODO: We use break here since using raise doesn't work as expected.

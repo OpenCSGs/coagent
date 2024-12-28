@@ -29,7 +29,7 @@ class CSGHub(ChatAgent):
     async def search_model(
         self,
         name: str = Field(description="The name of the model"),
-        language: Language = Field(description="The language that the model supports"),
+        language: Language = Field(description="The language that the model supports"),  # noqa: B008
         limit: int = Field(
             default=10, description="The maximum number of models to return"
         ),

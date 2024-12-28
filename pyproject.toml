@@ -60,7 +60,6 @@ ignore = [
     'B904',
     'C408',
     'E501',
-    'F841',
 ]
 
 [tool.poetry.scripts]

@@ -1,4 +1,4 @@
-import os
+import os  # noqa: F401
 from typing import AsyncIterator
 
 from starlette.applications import Starlette
@@ -8,7 +8,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from coagent.core import Address, RawMessage
 from coagent.core.exceptions import BaseError
-from coagent.runtimes import HTTPChannelBackend, LocalChannel, NATSChannel
+from coagent.runtimes import HTTPChannelBackend, LocalChannel, NATSChannel  # noqa: F401
 
 
 # NATS_URL = os.getenv("NATS_URL", "nats://localhost:4222")

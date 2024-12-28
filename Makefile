@@ -1,4 +1,4 @@
-sources = coagent tests
+sources = coagent tests examples
 
 .PHONY: .uv  ## Check that uv is installed
 .uv:

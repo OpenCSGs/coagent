@@ -9,10 +9,10 @@ from coagent.agents.chat_agent import ChatHistory, ChatMessage
 from coagent.core import Address, set_stderr_logger
 from coagent.runtimes import NATSRuntime, HTTPRuntime
 
-from textual import on, work
+from textual import on, work  # noqa: F401
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Input, Footer, Markdown, Button
-from textual.containers import Horizontal, VerticalScroll
+from textual.containers import Horizontal, VerticalScroll  # noqa: F401
 
 
 class Bot:
