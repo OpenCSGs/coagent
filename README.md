@@ -101,11 +101,11 @@ async def main():
         )
         async for chunk in result:
             msg = ChatMessage.decode(chunk)
-            print(msg.content, end="")
+            print(msg.content, end="", flush=True)
 
 
 if __name__ == "__main__":
-    set_stderr_logger("ERROR")
+    set_stderr_logger()
     asyncio.run(main())
 ```
 

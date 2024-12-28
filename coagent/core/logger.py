@@ -3,7 +3,7 @@ import sys
 from loguru import logger
 
 
-def set_stderr_logger(level: str = "DEBUG"):
+def set_stderr_logger(level: str = "INFO"):
     logger.remove()
     logger.add(
         sys.stderr,
