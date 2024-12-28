@@ -250,14 +250,25 @@ class AgentSpec:
 
     _runtime: Runtime | None = None
 
+    async def run(self, msg: RawMessage, timeout: float = 0.5) -> RawMessage:
+        self._assert_runtime()
+
+        addr = Address(name=self.name, id=uuid.uuid4().hex)
+        return await self._runtime.channel.publish(
+            addr, msg, request=True, timeout=timeout
+        )
+
     async def run_stream(self, msg: RawMessage) -> AsyncIterator[RawMessage]:
-        if self._runtime is None:
-            raise ValueError(f"AgentSpec {self.name} is not registered to a runtime.")
+        self._assert_runtime()
 
         addr = Address(name=self.name, id=uuid.uuid4().hex)
         result = self._runtime.channel.publish_multi(addr, msg)
         async for chunk in result:
             yield chunk
+
+    def _assert_runtime(self) -> None:
+        if self._runtime is None:
+            raise ValueError(f"AgentSpec {self.name} is not registered to a runtime.")
 
 
 class Runtime(abc.ABC):
