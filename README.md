@@ -63,101 +63,49 @@ pip install git+https://github.com/OpenCSGs/coagent.git
 
 ## Quick Start
 
-### Simple Agent
-
-Create a Ping-pong agent:
-
-```python
-# server.py
-
-import asyncio
-
-from coagent.core import (
-    BaseAgent,
-    Context,
-    handler,
-    idle_loop,
-    Message,
-    new,
-)
-from coagent.runtimes import NATSRuntime
-
-
-class Ping(Message):
-    pass
-
-
-class Pong(Message):
-    pass
-
-
-class Server(BaseAgent):
-    """The Ping-pong agent."""
-
-    @handler
-    async def handle(self, msg: Ping, ctx: Context) -> Pong:
-        """Handle the Ping message and return a Pong message."""
-        return Pong()
-
-
-async def main():
-    async with NATSRuntime.from_servers("nats://localhost:4222") as runtime:
-        await runtime.register("server", new(Server))
-        await idle_loop()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-Run the agent:
-
-```bash
-python server.py
-```
-
-Communicate with the agent:
-
-```bash
-coagent server -H type:Ping
-```
-
-### Chat Agent (LLM-based)
-
-Create a Translator agent:
-
 ```python
 # translator.py
 
 import asyncio
 import os
 
-from coagent.agents import ChatAgent, ModelClient
-from coagent.core import idle_loop, new, set_stderr_logger
-from coagent.runtimes import NATSRuntime
+from coagent.agents import ChatAgent, ChatHistory, ChatMessage, ModelClient
+from coagent.core import AgentSpec, new, set_stderr_logger
+from coagent.runtimes import LocalRuntime
 
+client = ModelClient(
+    model=os.getenv("MODEL_NAME"),
+    api_base=os.getenv("MODEL_API_BASE"),
+    api_version=os.getenv("MODEL_API_VERSION"),
+    api_key=os.getenv("MODEL_API_KEY"),
+)
 
-class Translator(ChatAgent):
-    """The translator agent."""
-
-    system = "You are a professional translator that can translate Chinese to English."
-
-    client = ModelClient(
-        model=os.getenv("MODEL_NAME"),
-        api_base=os.getenv("MODEL_API_BASE"),
-        api_version=os.getenv("MODEL_API_VERSION"),
-        api_key=os.getenv("MODEL_API_KEY"),
-    )
+translator = AgentSpec(
+    "translator",
+    new(
+        ChatAgent,
+        system="You are a professional translator that can translate Chinese to English.",
+        client=client,
+    ),
+)
 
 
 async def main():
-    async with NATSRuntime.from_servers("nats://localhost:4222") as runtime:
-        await runtime.register("translator", new(Translator))
-        await idle_loop()
+    async with LocalRuntime() as runtime:
+        await runtime.register_spec(translator)
+
+        result = translator.run_stream(
+            ChatHistory(
+                messages=[ChatMessage(role="user", content="你好，世界")]
+            ).encode()
+        )
+        async for chunk in result:
+            msg = ChatMessage.decode(chunk)
+            print(msg.content, end="")
 
 
 if __name__ == "__main__":
-    set_stderr_logger("TRACE")
+    set_stderr_logger("ERROR")
     asyncio.run(main())
 ```
 
@@ -169,12 +117,6 @@ export MODEL_API_BASE=<YOUR_MODEL_API_BASE>
 export MODEL_API_VERSION=<YOUR_MODEL_API_VERSION>
 export MODEL_API_KEY=<YOUR_MODEL_API_KEY>
 python translator.py
-```
-
-Communicate with the agent:
-
-```bash
-coagent translator -H type:ChatHistory -d '{"messages":[{"role":"user","content":"你好"}]}' --chat
 ```
 
 
