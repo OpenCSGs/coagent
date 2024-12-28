@@ -8,8 +8,8 @@ from .exceptions import BaseError
 from .messages import StopIteration, Error
 from .factory import Factory, DeleteAgent
 from .types import (
+    AgentSpec,
     Channel,
-    Constructor,
     Runtime,
     Address,
     RawMessage,
@@ -35,19 +35,21 @@ class BaseRuntime(Runtime):
         await self.deregister()
         await self._channel.close()
 
-    async def register(
-        self, name: str, constructor: Constructor, description: str = ""
-    ) -> None:
+    async def register_spec(self, spec: AgentSpec) -> None:
+        spec._runtime = self
+
         if self._discovery:
-            await self._discovery.register(name, constructor, description)
+            await self._discovery.register(
+                spec.name, spec.constructor, spec.description
+            )
 
-        if name in self._factories:
-            raise ValueError(f"Agent type {name} already registered")
+        if spec.name in self._factories:
+            raise ValueError(f"Agent type {spec.name} already registered")
 
-        factory = Factory(name, constructor)
+        factory = Factory(spec.name, spec.constructor)
         # We MUST set the channel and address manually.
-        factory.init(self._channel, Address(name=name))
-        self._factories[name] = factory
+        factory.init(self._channel, Address(name=spec.name))
+        self._factories[spec.name] = factory
 
         await factory.start()
 

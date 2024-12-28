@@ -11,6 +11,7 @@ from .runtime import BaseRuntime, BaseChannel, QueueSubscriptionIterator
 from .types import (
     Address,
     Agent,
+    AgentSpec,
     Constructor,
     Channel,
     MessageHeader,

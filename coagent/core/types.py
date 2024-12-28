@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import abc
+from dataclasses import dataclass
 import enum
 from typing import Any, AsyncIterator, Awaitable, Callable, Type
+import uuid
 
 from pydantic import BaseModel, Field
 
@@ -238,6 +240,26 @@ class Channel(abc.ABC):
         pass
 
 
+@dataclass
+class AgentSpec:
+    """The specification of an agent."""
+
+    name: str
+    constructor: Constructor
+    description: str = ""
+
+    _runtime: Runtime | None = None
+
+    async def run_stream(self, msg: RawMessage) -> AsyncIterator[RawMessage]:
+        if self._runtime is None:
+            raise ValueError(f"AgentSpec {self.name} is not registered to a runtime.")
+
+        addr = Address(name=self.name, id=uuid.uuid4().hex)
+        result = self._runtime.channel.publish_multi(addr, msg)
+        async for chunk in result:
+            yield chunk
+
+
 class Runtime(abc.ABC):
     async def __aenter__(self):
         await self.start()
@@ -254,10 +276,15 @@ class Runtime(abc.ABC):
     async def stop(self) -> None:
         pass
 
-    @abc.abstractmethod
     async def register(
         self, name: str, constructor: Constructor, description: str = ""
     ) -> None:
+        await self.register_spec(
+            AgentSpec(name=name, constructor=constructor, description=description)
+        )
+
+    @abc.abstractmethod
+    async def register_spec(self, spec: AgentSpec) -> None:
         pass
 
     @abc.abstractmethod
