@@ -45,7 +45,7 @@ class Trie(pygtrie.StringTrie):
 def get_func_args(func) -> set[str]:
     hints = get_type_hints(func)
     hints.pop("return", None)  # Ignore the return type.
-    return set(name for name in hints)
+    return set(hints.keys())
 
 
 async def clear_queue(queue: asyncio.Queue) -> None:

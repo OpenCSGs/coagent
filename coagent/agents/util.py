@@ -4,7 +4,7 @@ from typing import AsyncIterator
 
 from coagent.core import logger
 
-from .messages import ChatMessage, ChatHistory
+from .messages import ChatMessage
 from .model_client import default_model_client, ModelClient
 
 

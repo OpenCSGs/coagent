@@ -130,7 +130,7 @@ class ChatAgent(BaseAgent):
 
         tools = tools or []
         methods = inspect.getmembers(self, predicate=inspect.ismethod)
-        for name, meth in methods:
+        for _name, meth in methods:
             if getattr(meth, "is_tool", False):
                 tools.append(meth)
 
