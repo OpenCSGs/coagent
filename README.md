@@ -111,6 +111,91 @@ python translator.py
 
 ## Patterns
 
+### Workflow: Chaining
+
+**Chaining** decomposes a task into a sequence of steps, where each agent processes the output of the previous one.
+
+<p align="center">
+<img src="assets/patterns-chaining.png">
+</p>
+
+**When to use this workflow:** This workflow is ideal for situations where the task can be easily and cleanly decomposed into fixed subtasks. The main goal is to trade off latency for higher accuracy, by making each agent an easier task.
+
+**Example** (see [examples/patterns/chaining.py](examples/patterns/chaining.py) for a runnable example):
+
+```python
+from coagent.agents import ChatAgent, StreamChatAgent, Sequential, ModelClient
+from coagent.core import AgentSpec, new
+
+client = ModelClient(...)
+
+extractor = AgentSpec(
+    "extractor",
+    new(
+        ChatAgent,
+        system="""\
+Extract only the numerical values and their associated metrics from the text.
+Format each as 'value: metric' on a new line.
+Example format:
+92: customer satisfaction
+45%: revenue growth\
+""",
+        client=client,
+    ),
+)
+
+converter = AgentSpec(
+    "converter",
+    new(
+        ChatAgent,
+        system="""\
+Convert all numerical values to percentages where possible.
+If not a percentage or points, convert to decimal (e.g., 92 points -> 92%).
+Keep one number per line.
+Example format:
+92%: customer satisfaction
+45%: revenue growth\
+""",
+        client=client,
+    ),
+)
+
+sorter = AgentSpec(
+    "sorter",
+    new(
+        ChatAgent,
+        system="""\
+Sort all lines in descending order by numerical value.
+Keep the format 'value: metric' on each line.
+Example:
+92%: customer satisfaction
+87%: employee satisfaction\
+""",
+        client=client,
+    ),
+)
+
+formatter = AgentSpec(
+    "formatter",
+    new(
+        StreamChatAgent,
+        system="""\
+Format the sorted data as a markdown table with columns:
+| Metric | Value |
+|:--|--:|
+| Customer Satisfaction | 92% |\
+""",
+        client=client,
+    ),
+)
+
+chain = AgentSpec(
+    "chain", new(Sequential, "extractor", "converter", "sorter", "formatter")
+)
+```
+
+### Agents
+
 TODO
 
 
