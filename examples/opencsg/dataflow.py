@@ -1,7 +1,7 @@
 import argparse
 import asyncio
 
-from coagent.agents import ChatAgent, tool
+from coagent.agents import StreamChatAgent, tool
 from coagent.core import idle_loop, new, set_stderr_logger
 from coagent.runtimes import NATSRuntime
 
@@ -9,7 +9,7 @@ import httpx
 from pydantic import Field
 
 
-class DataFlow(ChatAgent):
+class DataFlow(StreamChatAgent):
     """An agent that help users deal with tasks related to datasets."""
 
     system = "You are an agent that help users deal with tasks related to datasets."

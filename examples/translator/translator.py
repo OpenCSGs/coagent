@@ -1,6 +1,6 @@
 import asyncio
 
-from coagent.agents import ChatAgent
+from coagent.agents import StreamChatAgent
 from coagent.core import idle_loop, new, set_stderr_logger
 from coagent.runtimes import NATSRuntime
 
@@ -10,7 +10,7 @@ async def main():
         await runtime.register(
             "translator",
             new(
-                ChatAgent,
+                StreamChatAgent,
                 system="""You are a professional translator that can translate Chinese to English.""",
             ),
         )

@@ -1,11 +1,11 @@
 import asyncio
 
 from coagent.core import idle_loop, new, set_stderr_logger
-from coagent.agents import ChatAgent, tool
+from coagent.agents import StreamChatAgent, tool
 from coagent.runtimes import NATSRuntime
 
 
-class AutoTeam(ChatAgent):
+class AutoTeam(StreamChatAgent):
     system = """You are an manager who manages a team that consists of a dev agent and a qa agent.
     
     Your team is responsible for build software for users, and you should follow these rules:
@@ -17,12 +17,14 @@ class AutoTeam(ChatAgent):
     @tool
     async def transfer_to_dev(self):
         """The dev agent to generate the software code."""
-        return await self.agent("dev")
+        async for chunk in self.agent("dev"):
+            yield chunk
 
     @tool
     async def transfer_to_qa(self):
         """The qa agent to review and refine the given software code."""
-        return await self.agent("qa")
+        async for chunk in self.agent("qa"):
+            yield chunk
 
 
 async def main():
