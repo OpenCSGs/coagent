@@ -20,6 +20,7 @@ An open-source framework for building monolithic or distributed agentic systems,
     - [x] Agent Discovery
     - [x] Static orchestration
         - [x] Sequential
+        - [x] Parallel
     - [x] Dynamic orchestration
         - [x] Dynamic Triage
         - [x] Handoffs (based on async Swarm)
@@ -194,13 +195,12 @@ chain = AgentSpec(
 )
 ```
 
-### Agents
-
 TODO
 
 
 ## Examples
 
+- [patterns](examples/patterns)
 - [ping-pong](examples/ping-pong)
 - [stream-ping-pong](examples/stream-ping-pong)
 - [discovery](examples/discovery)
