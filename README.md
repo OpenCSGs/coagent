@@ -195,6 +195,101 @@ chain = AgentSpec(
 )
 ```
 
+### Workflow: Parallelization
+
+**Parallelization** distributes independent subtasks across multiple agents for concurrent processing.
+
+<p align="center">
+<img src="assets/patterns-parallelization.png">
+</p>
+
+**When to use this workflow:** Parallelization is effective when the divided subtasks can be parallelized for speed, or when multiple perspectives or attempts are needed for higher confidence results.
+
+**Example** (see [examples/patterns/parallelization.py](examples/patterns/parallelization.py) for a runnable example):
+
+```python
+from coagent.agents import Aggregator, ChatAgent, ModelClient, Parallel
+from coagent.core import AgentSpec, new
+
+client = ModelClient(...)
+
+customer = AgentSpec(
+    "customer",
+    new(
+        ChatAgent,
+        system="""\
+Customers:
+- Price sensitive
+- Want better tech
+- Environmental concerns\
+""",
+        client=client,
+    ),
+)
+
+employee = AgentSpec(
+    "employee",
+    new(
+        ChatAgent,
+        system="""\
+Employees:
+- Job security worries
+- Need new skills
+- Want clear direction\
+""",
+        client=client,
+    ),
+)
+
+investor = AgentSpec(
+    "investor",
+    new(
+        ChatAgent,
+        system="""\
+Investors:
+- Expect growth
+- Want cost control
+- Risk concerns\
+""",
+        client=client,
+    ),
+)
+
+supplier = AgentSpec(
+    "supplier",
+    new(
+        ChatAgent,
+        system="""\
+Suppliers:
+- Capacity constraints
+- Price pressures
+- Tech transitions\
+""",
+        client=client,
+    ),
+)
+
+aggregator = AgentSpec(
+    "aggregator",
+    new(Aggregator),
+)
+
+parallel = AgentSpec(
+    "parallel",
+    new(
+        Parallel,
+        "customer",
+        "employee",
+        "investor",
+        "supplier",
+        aggregator="aggregator",
+    ),
+)
+```
+
+
+### Workflow: Routing
+
 TODO
 
 
