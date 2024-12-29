@@ -114,7 +114,7 @@ def wrap_error(func):
     return run
 
 
-class ChatAgent(BaseAgent):
+class StreamChatAgent(BaseAgent):
     def __init__(
         self,
         name: str = "",
@@ -168,7 +168,23 @@ class ChatAgent(BaseAgent):
             yield chunk
 
     @handler
-    async def handle(
+    async def handle_history(
+        self, msg: ChatHistory, ctx: Context
+    ) -> AsyncIterator[ChatMessage]:
+        response = self._handle_history(msg, ctx)
+        async for resp in response:
+            yield resp
+
+    @handler
+    async def handle_message(
+        self, msg: ChatMessage, ctx: Context
+    ) -> AsyncIterator[ChatMessage]:
+        history = ChatHistory(messages=[msg])
+        response = self._handle_history(history, ctx)
+        async for resp in response:
+            yield resp
+
+    async def _handle_history(
         self, msg: ChatHistory, ctx: Context
     ) -> AsyncIterator[ChatMessage]:
         # For now, we assume that the agent is processing messages sequentially.
@@ -205,3 +221,23 @@ class ChatAgent(BaseAgent):
     async def _has_confirm_message(self, history: ChatHistory) -> bool:
         """Check if the penultimate message is a confirmation message."""
         return len(history.messages) > 1 and history.messages[-2].type == "confirm"
+
+
+class ChatAgent(StreamChatAgent):
+    """Non-streaming ChatAgent."""
+
+    @handler
+    async def handle_history(self, msg: ChatHistory, ctx: Context) -> ChatMessage:
+        accumulated_response = ChatMessage(role="assistant", content="")
+        response = super().handle_history(msg, ctx)
+        async for chunk in response:
+            accumulated_response.content += chunk.content
+        return accumulated_response
+
+    @handler
+    async def handle_message(self, msg: ChatMessage, ctx: Context) -> ChatMessage:
+        accumulated_response = ChatMessage(role="assistant", content="")
+        response = super().handle_message(msg, ctx)
+        async for chunk in response:
+            accumulated_response.content += chunk.content
+        return accumulated_response
