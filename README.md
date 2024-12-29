@@ -59,7 +59,7 @@ pip install git+https://github.com/OpenCSGs/coagent.git
 import asyncio
 import os
 
-from coagent.agents import ChatAgent, ChatHistory, ChatMessage, ModelClient
+from coagent.agents import StreamChatAgent, ChatMessage, ModelClient
 from coagent.core import AgentSpec, new, set_stderr_logger
 from coagent.runtimes import LocalRuntime
 
@@ -73,7 +73,7 @@ client = ModelClient(
 translator = AgentSpec(
     "translator",
     new(
-        ChatAgent,
+        StreamChatAgent,
         system="You are a professional translator that can translate Chinese to English.",
         client=client,
     ),
@@ -85,9 +85,7 @@ async def main():
         await runtime.register_spec(translator)
 
         result = translator.run_stream(
-            ChatHistory(
-                messages=[ChatMessage(role="user", content="你好，世界")]
-            ).encode()
+            ChatMessage(role="user", content="你好，世界").encode()
         )
         async for chunk in result:
             msg = ChatMessage.decode(chunk)
