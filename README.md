@@ -1,7 +1,7 @@
 # Coagent
 [![CI](https://github.com/OpenCSGs/coagent/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenCSGs/coagent/actions?query=event%3Apush+branch%3Amain+workflow%3ACI)
 
-An open-source framework for building distributed, scalable, and collaborative multi-agent applications.
+An open-source framework for building monolithic or distributed agentic systems, ranging from simple LLM calls to compositional workflows and autonomous agents.
 
 
 <p align="center">
@@ -12,7 +12,7 @@ An open-source framework for building distributed, scalable, and collaborative m
 ## Features
 
 - [x] Event-driven
-- [x] Distributed & Fault-tolerant
+- [x] Monolithic or Distributed
 - [x] Single-agent
     - [x] Function-calling
     - [ ] ReAct
@@ -25,17 +25,15 @@ An open-source framework for building distributed, scalable, and collaborative m
         - [x] Handoffs (based on async Swarm)
         - [ ] Group Chat
 - [x] Runtime
-    - [x] NATSRuntime (NATS-based Distributed Runtime)
-        - [ ] Using NATS [JetStream][2]
-    - [x] HTTPRuntime (HTTP-based Distributed Runtime)
-    - [x] LocalRuntime (In-process Runtime)
+    - [x] Local Runtime (In-process Runtime)
+    - [x] HTTP Runtime (HTTP-based Distributed Runtime)
+    - [x] NATS Runtime (NATS-based Distributed Runtime)
+        - [ ] Using NATS [JetStream][1]
 - [x] [CoS](coagent/cos) (Multi-language support)
     - [x] [Python](examples/cos/cos.py)
     - [x] [Node.js](examples/cos/cos.js)
     - [x] [Go](examples/cos/goagent)
     - [ ] Rust
-- [ ] Cross-language support
-    - [ ] Protocol Buffers
 
 
 ## Three-tier Architecture
@@ -43,15 +41,6 @@ An open-source framework for building distributed, scalable, and collaborative m
 <p align="center">
 <img src="assets/coagent-three-tier-architecture.png" height="500">
 </p>
-
-
-## Prerequisites
-
-Start a NATS server ([docs][1]):
-
-```bash
-docker run -p 4222:4222 --name nats-server -ti nats:latest
-```
 
 
 ## Installation
@@ -120,6 +109,11 @@ python translator.py
 ```
 
 
+## Patterns
+
+TODO
+
+
 ## Examples
 
 - [ping-pong](examples/ping-pong)
@@ -132,6 +126,4 @@ python translator.py
 - [cos](examples/cos)
 
 
-
-[1]: https://docs.nats.io/running-a-nats-service/nats_docker/nats-docker-tutorial
-[2]: https://docs.nats.io/nats-concepts/jetstream
+[1]: https://docs.nats.io/nats-concepts/jetstream
