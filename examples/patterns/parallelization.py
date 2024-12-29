@@ -75,10 +75,7 @@ Suppliers:
     ),
 )
 
-aggregator = AgentSpec(
-    "aggregator",
-    new(Aggregator),
-)
+aggregator = AgentSpec("aggregator", new(Aggregator))
 
 parallel = AgentSpec(
     "parallel",
