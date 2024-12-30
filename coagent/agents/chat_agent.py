@@ -64,6 +64,19 @@ class Delegate:
         self.host_agent: ChatAgent = host_agent
         self.agent_type: str = agent_type
 
+    async def handle(self, msg: ChatHistory) -> ChatMessage:
+        addr = Address(name=self.agent_type, id=self.host_agent.address.id)
+        result = await self.host_agent.channel.publish(addr, msg.encode())
+        return ChatMessage.decode(result)
+
+
+class StreamDelegate:
+    """A streaming delegate agent that helps to handle a specific task."""
+
+    def __init__(self, host_agent: StreamChatAgent, agent_type: str):
+        self.host_agent: StreamChatAgent = host_agent
+        self.agent_type: str = agent_type
+
     async def handle(self, msg: ChatHistory) -> AsyncIterator[ChatMessage]:
         addr = Address(name=self.agent_type, id=self.host_agent.address.id)
         result = self.host_agent.channel.publish_multi(addr, msg.encode())
@@ -164,7 +177,7 @@ class StreamChatAgent(BaseAgent):
 
     async def agent(self, agent_type: str) -> AsyncIterator[ChatMessage]:
         """The candidate agent to delegate the conversation to."""
-        async for chunk in Delegate(self, agent_type).handle(self._history):
+        async for chunk in StreamDelegate(self, agent_type).handle(self._history):
             yield chunk
 
     @handler
@@ -225,6 +238,10 @@ class StreamChatAgent(BaseAgent):
 
 class ChatAgent(StreamChatAgent):
     """Non-streaming ChatAgent."""
+
+    async def agent(self, agent_type: str) -> ChatMessage:
+        """The candidate agent to delegate the conversation to."""
+        return await Delegate(self, agent_type).handle(self._history)
 
     @handler
     async def handle_history(self, msg: ChatHistory, ctx: Context) -> ChatMessage:
