@@ -5,10 +5,10 @@ from coagent.agents import (
     Aggregator,
     AggregationResult,
     ChatAgent,
+    ChatMessage,
     ModelClient,
     Parallel,
 )
-from coagent.agents.messages import ChatMessage
 from coagent.core import AgentSpec, new, set_stderr_logger
 from coagent.runtimes import LocalRuntime
 

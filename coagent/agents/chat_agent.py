@@ -66,7 +66,7 @@ class Delegate:
 
     async def handle(self, msg: ChatHistory) -> ChatMessage:
         addr = Address(name=self.agent_type, id=self.host_agent.address.id)
-        result = await self.host_agent.channel.publish(addr, msg.encode())
+        result = await self.host_agent.channel.publish(addr, msg.encode(), request=True)
         return ChatMessage.decode(result)
 
 
