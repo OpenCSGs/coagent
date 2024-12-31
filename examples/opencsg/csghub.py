@@ -2,7 +2,7 @@ import argparse
 import asyncio
 from enum import Enum
 
-from coagent.agents import StreamChatAgent, confirm, tool
+from coagent.agents import StreamChatAgent, confirm, RunContext, tool
 from coagent.agents.messages import ChatMessage
 from coagent.core import idle_loop, new, set_stderr_logger
 from coagent.runtimes import NATSRuntime
@@ -28,6 +28,7 @@ class CSGHub(StreamChatAgent):
     @confirm("About to search model {name}, are you sure?")
     async def search_model(
         self,
+        ctx: RunContext,
         name: str = Field(description="The name of the model"),
         language: Language = Field(description="The language that the model supports"),  # noqa: B008
         limit: int = Field(

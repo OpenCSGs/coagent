@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import inspect
+import json
 import re
 from typing import Any, AsyncIterator, Callable
 
@@ -10,6 +11,7 @@ from pydantic_core import PydanticUndefined
 from pydantic.fields import FieldInfo
 
 from .aswarm import Agent as SwarmAgent, Swarm
+from .aswarm.util import function_to_jsonschema
 from .messages import ChatMessage, ChatHistory
 from .model_client import default_model_client, ModelClient
 from .util import is_user_confirmed
@@ -25,6 +27,14 @@ class RunContext(dict):
     @user_confirmed.setter
     def user_confirmed(self, value: bool) -> None:
         self["user_confirmed"] = value
+
+    @property
+    def user_submitted(self) -> bool:
+        return self.get("user_submitted", False)
+
+    @user_submitted.setter
+    def user_submitted(self, value: bool) -> None:
+        self["user_submitted"] = value
 
 
 def confirm(template: str):
@@ -45,6 +55,55 @@ def confirm(template: str):
                     role="assistant",
                     content=template.format(**kwargs),
                     type="confirm",
+                    to_user=True,
+                )
+
+            # Note that we assume that the tool is not an async generator,
+            # so we always use `await` here.
+            return await func(*args, **kwargs)
+
+        return run
+
+    return wrapper
+
+
+def submit(template: str = ""):
+    """Decorator to ask the user to fill in the input form, if not yet, by
+    sending a message which holds the input schema of the current tool.
+    """
+    template = (
+        template
+        or """\
+Please fill in the input form below:
+
+```schema
+{schema}
+```
+
+```input
+{input}
+```\
+"""
+    )
+
+    def wrapper(func):
+        @functools.wraps(func)
+        async def run(*args: Any, **kwargs: Any) -> ChatMessage | str:
+            # Ask the user to fill in the input form if not yet.
+            ctx = kwargs.get("ctx", None)
+            if ctx and not RunContext(ctx).user_submitted:
+                raw = function_to_jsonschema(func)
+                schema_json = json.dumps(raw["function"], ensure_ascii=False, indent=2)
+                # We assume that all meaningful arguments (includes `ctx` but
+                # excepts possible `self`) are keyword arguments. Therefore,
+                # here we use kwargs directly as the template variables.
+                input_ = {k: v for k, v in kwargs.items() if k != "ctx"}
+                input_json = json.dumps(input_, ensure_ascii=False, indent=2)
+
+                return ChatMessage(
+                    role="assistant",
+                    content=template.format(schema=schema_json, input=input_json),
+                    type="submit",
                     to_user=True,
                 )
 
@@ -203,7 +262,8 @@ class StreamChatAgent(BaseAgent):
         # For now, we assume that the agent is processing messages sequentially.
         self._history: ChatHistory = msg
 
-        await self.update_user_confirmed(self._history)
+        await self.update_user_confirmed(msg)
+        await self.update_user_submitted(msg)
 
         response = self._swarm_client.run_and_stream(
             agent=self._swarm_agent,
@@ -234,6 +294,18 @@ class StreamChatAgent(BaseAgent):
     async def _has_confirm_message(self, history: ChatHistory) -> bool:
         """Check if the penultimate message is a confirmation message."""
         return len(history.messages) > 1 and history.messages[-2].type == "confirm"
+
+    async def update_user_submitted(self, history: ChatHistory) -> None:
+        ctx = RunContext(history.extensions)
+        ctx.user_submitted = await self._is_submit_message(history)
+        history.extensions = ctx
+
+    async def _is_submit_message(self, history: ChatHistory) -> bool:
+        """Check if the last message is a user submission message."""
+        if len(history.messages) == 0:
+            return False
+        last_msg = history.messages[-1]
+        return last_msg.role == "user" and last_msg.type == "submit"
 
 
 class ChatAgent(StreamChatAgent):

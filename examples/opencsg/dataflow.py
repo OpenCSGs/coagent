@@ -1,7 +1,7 @@
 import argparse
 import asyncio
 
-from coagent.agents import StreamChatAgent, tool
+from coagent.agents import StreamChatAgent, RunContext, submit, tool
 from coagent.core import idle_loop, new, set_stderr_logger
 from coagent.runtimes import NATSRuntime
 
@@ -15,8 +15,9 @@ class DataFlow(StreamChatAgent):
     system = "You are an agent that help users deal with tasks related to datasets."
 
     @tool
+    @submit()
     async def search_dataset(
-        self, name: str = Field(description="The name of the dataset")
+        self, ctx: RunContext, name: str = Field(description="The name of the dataset")
     ) -> str:
         """Search datasets by the given name."""
         async with httpx.AsyncClient() as client:

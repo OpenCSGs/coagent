@@ -135,6 +135,10 @@ def function_to_jsonschema(func) -> dict:
     # 2. Create a dictionary of field definitions for the Pydantic model
     fields = {}
     for param_name, param in sig.parameters.items():
+        # Skip the special self argument.
+        if param_name == "self":
+            continue
+
         # Skip the special context argument.
         if param_name == __CTX_VARS_NAME__:
             continue
