@@ -319,24 +319,6 @@ Keep responses professional but friendly.\
     ),
 )
 
-technical = AgentSpec(
-    "team.technical",  # Under the team namespace
-    new(
-        StreamChatAgent,
-        system="""\
-You are a technical support engineer. Follow these guidelines:
-1. Always start with "Technical Support Response:"
-2. List exact steps to resolve the issue
-3. Include system requirements if relevant
-4. Provide workarounds for common problems
-5. End with escalation path if needed
-
-Use clear, numbered steps and technical details.\
-""",
-        client=client,
-    ),
-)
-
 account = AgentSpec(
     "team.account",  # Under the team namespace
     new(

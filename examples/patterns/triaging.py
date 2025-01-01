@@ -30,24 +30,6 @@ Keep responses professional but friendly.\
     ),
 )
 
-technical = AgentSpec(
-    "team.technical",  # Under the team namespace
-    new(
-        StreamChatAgent,
-        system="""\
-You are a technical support engineer. Follow these guidelines:
-1. Always start with "Technical Support Response:"
-2. List exact steps to resolve the issue
-3. Include system requirements if relevant
-4. Provide workarounds for common problems
-5. End with escalation path if needed
-
-Use clear, numbered steps and technical details.\
-""",
-        client=client,
-    ),
-)
-
 account = AgentSpec(
     "team.account",  # Under the team namespace
     new(
@@ -79,7 +61,7 @@ triage = AgentSpec(
 
 async def main():
     async with LocalRuntime() as runtime:
-        for spec in [billing, technical, account, triage]:
+        for spec in [billing, account, triage]:
             await runtime.register_spec(spec)
 
         result = triage.run_stream(
@@ -100,5 +82,5 @@ submit a report by end of day.
 
 
 if __name__ == "__main__":
-    set_stderr_logger("TRACE")
+    set_stderr_logger()
     asyncio.run(main())
