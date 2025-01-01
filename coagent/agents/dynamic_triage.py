@@ -153,7 +153,23 @@ class DynamicTriage(BaseAgent):
         await self._update_swarm_agent()
 
     @handler
-    async def handle(
+    async def handle_history(
+        self, msg: ChatHistory, ctx: Context
+    ) -> AsyncIterator[ChatMessage]:
+        response = self._handle_history(msg, ctx)
+        async for resp in response:
+            yield resp
+
+    @handler
+    async def handle_message(
+        self, msg: ChatMessage, ctx: Context
+    ) -> AsyncIterator[ChatMessage]:
+        history = ChatHistory(messages=[msg])
+        response = self._handle_history(history, ctx)
+        async for resp in response:
+            yield resp
+
+    async def _handle_history(
         self, msg: ChatHistory, ctx: Context
     ) -> AsyncIterator[ChatMessage]:
         # For now, we assume that the agent is processing messages sequentially.

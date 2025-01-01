@@ -283,9 +283,88 @@ parallel = AgentSpec(
 ```
 
 
-### Workflow: Routing
+### Workflow: Triaging & Routing
 
-TODO
+**Triaging** classifies an input and directs it to a specialized followup agent. This workflow allows for separation of concerns, and building more specialized agents.
+
+<p align="center">
+<img src="assets/patterns-triaging.png">
+</p>
+
+**When to use this workflow:** This workflow works well for complex tasks where there are distinct categories that are better handled separately, and where classification can be handled accurately, either by an LLM (using Prompting or Function-calling) or a more traditional classification model/algorithm.
+
+**Example** (see [examples/patterns/triaging.py](examples/patterns/triaging.py) for a runnable example):
+
+```python
+from coagent.agents import DynamicTriage, ModelClient, StreamChatAgent
+from coagent.core import AgentSpec, new
+
+client = ModelClient(...)
+
+billing = AgentSpec(
+    "team.billing",  # Under the team namespace
+    new(
+        StreamChatAgent,
+        system="""\
+You are a billing support specialist. Follow these guidelines:
+1. Always start with "Billing Support Response:"
+2. First acknowledge the specific billing issue
+3. Explain any charges or discrepancies clearly
+4. List concrete next steps with timeline
+5. End with payment options if relevant
+
+Keep responses professional but friendly.\
+""",
+        client=client,
+    ),
+)
+
+technical = AgentSpec(
+    "team.technical",  # Under the team namespace
+    new(
+        StreamChatAgent,
+        system="""\
+You are a technical support engineer. Follow these guidelines:
+1. Always start with "Technical Support Response:"
+2. List exact steps to resolve the issue
+3. Include system requirements if relevant
+4. Provide workarounds for common problems
+5. End with escalation path if needed
+
+Use clear, numbered steps and technical details.\
+""",
+        client=client,
+    ),
+)
+
+account = AgentSpec(
+    "team.account",  # Under the team namespace
+    new(
+        StreamChatAgent,
+        system="""\
+You are an account security specialist. Follow these guidelines:
+1. Always start with "Account Support Response:"
+2. Prioritize account security and verification
+3. Provide clear steps for account recovery/changes
+4. Include security tips and warnings
+5. Set clear expectations for resolution time
+
+Maintain a serious, security-focused tone.\
+""",
+        client=client,
+    ),
+)
+
+triage = AgentSpec(
+    "triage",
+    new(
+        DynamicTriage,
+        system="""You are a triage agent who will delegate to sub-agents based on the conversation content.""",
+        client=client,
+        namespace="team",  # Collect all sub-agents under the team namespace
+    ),
+)
+```
 
 
 ## Examples
