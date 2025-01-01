@@ -1,3 +1,4 @@
+from typing import Awaitable, Callable
 from coagent.core import (
     Address,
     BaseAgent,
@@ -28,12 +29,17 @@ class AggregationResult(Message):
 
 
 class Aggregator(BaseAgent):
-    def __init__(self):
+    def __init__(
+        self,
+        aggregate: Callable[[list[RawMessage]], Awaitable[RawMessage]] | None = None,
+    ):
         super().__init__()
+
+        self._aggregate = aggregate or self.aggregate
 
         self._busy: bool = False
         self._data: StartAggregation | None = None
-        self._result: AggregationResult | None = None
+        self._results: list[RawMessage] | None = None
 
     @handler
     async def start_aggregation(
@@ -44,7 +50,7 @@ class Aggregator(BaseAgent):
 
         self._busy = True
         self._data = msg
-        self._result = AggregationResult(results=[])
+        self._results = []
 
         return AggregationStatus(status="ok")
 
@@ -53,12 +59,20 @@ class Aggregator(BaseAgent):
         if not self._busy:
             return
 
-        self._result.results.append(msg.encode())
+        self._results.append(msg.encode())
 
-        if len(self._result.results) == len(self._data.candidates):
+        if len(self._results) == len(self._data.candidates):
             if self._data.reply_addr:
-                await self.channel.publish(self._data.reply_addr, self._result.encode())
+                result = await self._aggregate(self._results)
+                await self.channel.publish(self._data.reply_addr, result)
             self._busy = False
+
+    async def aggregate(self, results: list[RawMessage]) -> RawMessage:
+        """Aggregate the results to a single one.
+
+        Override this method to provide custom aggregation logic.
+        """
+        return AggregationResult(results=results).encode()
 
 
 class Parallel(BaseAgent):
