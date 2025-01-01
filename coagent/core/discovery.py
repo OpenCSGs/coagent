@@ -5,6 +5,7 @@ import asyncio
 from pydantic import BaseModel, Field
 
 from .agent import BaseAgent, Context, handler, Operation
+from .exceptions import AgentTypeNotFoundError
 from .messages import Message
 from .types import (
     Address,
@@ -331,7 +332,12 @@ class DiscoveryServer(BaseAgent):
                 msg = AgentsDeregistered(
                     agents=[Schema(name=name) for name in matched_names]
                 )
-                await self.channel.publish(addr, msg.encode())
+                try:
+                    await self.channel.publish(addr, msg.encode())
+                except AgentTypeNotFoundError:
+                    # The subscribing agent itself has been deregistered.
+                    # Just ignore it.
+                    pass
 
     @handler
     async def synchronize(
