@@ -85,7 +85,7 @@ class DynamicTriage(BaseAgent):
     async def _update_swarm_agent(self) -> None:
         agent_names = list(self._sub_agents.keys())
         logger.debug(
-            f"[{self.__class__.__name__}] Discovered sub-agents: {agent_names}"
+            f"[{self.__class__.__name__} {self.id}] Discovered sub-agents: {agent_names}"
         )
 
         tools = []

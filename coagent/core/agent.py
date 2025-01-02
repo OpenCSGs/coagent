@@ -131,6 +131,13 @@ class BaseAgent(Agent):
             **message_types,
         }
 
+    @property
+    def id(self) -> str:
+        if self.address.id:
+            return f"{self.address.name}.{self.address.id}"
+        else:
+            return self.address.name
+
     def init(self, channel: Channel, address: Address) -> None:
         self.channel = channel
         self.address = address
@@ -171,9 +178,8 @@ class BaseAgent(Agent):
         pass
 
     async def receive(self, raw: RawMessage) -> None:
-        logger.debug(
-            f"[{self.__class__.__name__}] Received a message: {raw.model_dump()}"
-        )
+        name: str = f"{self.__class__.__name__} {self.id}"
+        logger.debug(f"[{name}] Received a message: {raw.model_dump()}")
 
         async with self._lock:
             self._last_msg_received_at = time.time()

@@ -136,6 +136,12 @@ class State(str, enum.Enum):
 
 
 class Agent(abc.ABC):
+    @property
+    @abc.abstractmethod
+    def id(self) -> str:
+        """Return the unique ID of the agent."""
+        pass
+
     @abc.abstractmethod
     def init(self, channel: Channel, address: Address) -> None:
         """Initialize the agent with the given channel and address."""

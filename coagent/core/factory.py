@@ -94,7 +94,7 @@ class Factory(BaseAgent):
 
             running_num = total_num - idle_num
             logger.debug(
-                f"[Factory {self.address.name}] Recycling agents: {running_num} running, {idle_num} idle"
+                f"[Factory {self.id}] Recycling agents: {running_num} running, {idle_num} idle"
             )
 
             deleted_agents: list[Agent] = []
