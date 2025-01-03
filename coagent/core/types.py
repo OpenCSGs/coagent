@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from dataclasses import dataclass
+import dataclasses
 import enum
 from typing import Any, AsyncIterator, Awaitable, Callable, Type
 import uuid
@@ -246,7 +246,7 @@ class Channel(abc.ABC):
         pass
 
 
-@dataclass
+@dataclasses.dataclass
 class AgentSpec:
     """The specification of an agent."""
 
@@ -254,26 +254,32 @@ class AgentSpec:
     constructor: Constructor
     description: str = ""
 
-    _runtime: Runtime | None = None
+    __runtime: Runtime | None = dataclasses.field(default=None, init=False)
+
+    def register(self, runtime: Runtime) -> None:
+        """Register the agent specification to a runtime."""
+        self.__runtime = runtime
 
     async def run(self, msg: RawMessage, timeout: float = 0.5) -> RawMessage:
-        self._assert_runtime()
+        """Create an agent and run it with the given message."""
+        self.__assert_runtime()
 
         addr = Address(name=self.name, id=uuid.uuid4().hex)
-        return await self._runtime.channel.publish(
+        return await self.__runtime.channel.publish(
             addr, msg, request=True, timeout=timeout
         )
 
     async def run_stream(self, msg: RawMessage) -> AsyncIterator[RawMessage]:
-        self._assert_runtime()
+        """Create an agent and run it with the given message."""
+        self.__assert_runtime()
 
         addr = Address(name=self.name, id=uuid.uuid4().hex)
-        result = self._runtime.channel.publish_multi(addr, msg)
+        result = self.__runtime.channel.publish_multi(addr, msg)
         async for chunk in result:
             yield chunk
 
-    def _assert_runtime(self) -> None:
-        if self._runtime is None:
+    def __assert_runtime(self) -> None:
+        if self.__runtime is None:
             raise ValueError(f"AgentSpec {self.name} is not registered to a runtime.")
 
 
