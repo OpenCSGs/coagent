@@ -9,7 +9,7 @@ from .exceptions import AgentTypeNotFoundError
 from .messages import Message
 from .types import (
     Address,
-    Constructor,
+    AgentSpec,
     RawMessage,
 )
 from .util import Trie
@@ -147,14 +147,12 @@ class Discovery(BaseAgent):
         if self._sub:
             await self._sub.unsubscribe()
 
-    async def register(
-        self, name: str, constructor: Constructor, description: str = ""
-    ) -> None:
-        if name == self.address.name:
+    async def register(self, spec: AgentSpec) -> None:
+        if spec.name == self.address.name:
             raise ValueError(f"Agent type '{self.address.name}' is reserved")
 
         if self._server:
-            await self._server.register(name, constructor, description)
+            await self._server.register(spec)
 
     async def deregister(self, *names: str) -> None:
         if self._server:
@@ -292,22 +290,20 @@ class DiscoveryServer(BaseAgent):
         if self._sub:
             await self._sub.unsubscribe()
 
-    async def register(
-        self, name: str, constructor: Constructor, description: str = ""
-    ) -> None:
-        if name == self.address.name:
+    async def register(self, spec: AgentSpec) -> None:
+        if spec.name == self.address.name:
             raise ValueError(f"Agent type '{self.address.name}' is reserved")
-        if name in self._agent_schemas:
-            raise ValueError(f"Agent type '{name}' already registered")
+        if spec.name in self._agent_schemas:
+            raise ValueError(f"Agent type '{spec.name}' already registered")
 
-        operations = constructor.type.collect_operations()
-        description = description or constructor.type.__doc__ or ""
-        schema = Schema(name=name, description=description, operations=operations)
-        self._agent_schemas[name] = schema
+        operations = spec.constructor.type.collect_operations()
+        description = spec.description or spec.constructor.type.__doc__ or ""
+        schema = Schema(name=spec.name, description=description, operations=operations)
+        self._agent_schemas[spec.name] = schema
 
         # Notify all subscribers about the registration of the new agent.
         for addr, query in self._agent_subscriptions.items():
-            if query.matches(name):
+            if query.matches(spec.name):
                 msg = AgentsRegistered(
                     agents=[Schema(name=schema.name, description=schema.description)]
                 )

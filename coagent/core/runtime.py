@@ -39,14 +39,12 @@ class BaseRuntime(Runtime):
         spec.register(self)
 
         if self._discovery:
-            await self._discovery.register(
-                spec.name, spec.constructor, spec.description
-            )
+            await self._discovery.register(spec)
 
         if spec.name in self._factories:
             raise ValueError(f"Agent type {spec.name} already registered")
 
-        factory = Factory(spec.name, spec.constructor)
+        factory = Factory(spec)
         # We MUST set the channel and address manually.
         factory.init(self._channel, Address(name=spec.name))
         self._factories[spec.name] = factory

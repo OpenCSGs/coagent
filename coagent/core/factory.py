@@ -6,7 +6,7 @@ from .messages import Message
 from .types import (
     Address,
     Agent,
-    Constructor,
+    AgentSpec,
     State,
 )
 
@@ -30,11 +30,10 @@ class Factory(BaseAgent):
     its address is corresponding with the name of the agent type.
     """
 
-    def __init__(self, name: str, constructor: Constructor):
+    def __init__(self, spec: AgentSpec) -> None:
         super().__init__()
 
-        self._name: str = name
-        self._constructor: Constructor = constructor
+        self._spec: AgentSpec = spec
 
         self._agents: dict[Address, Agent] = {}
         self._lock: asyncio.Lock = asyncio.Lock()
@@ -110,12 +109,12 @@ class Factory(BaseAgent):
     @handler
     async def create_agent(self, msg: CreateAgent, ctx: Context) -> None:
         async with self._lock:
-            addr = Address(name=self._name, id=msg.session_id)
+            addr = Address(name=self.address.name, id=msg.session_id)
             if addr in self._agents:
                 return
 
             # Create an agent with the given channel and address.
-            agent = await self._constructor(self.channel, addr)
+            agent = await self._spec.constructor(self.channel, addr)
             self._agents[addr] = agent
 
             await agent.start()
@@ -126,7 +125,7 @@ class Factory(BaseAgent):
         #        factory agent since there are multiple factories working
         #        in load balancing mode.
         async with self._lock:
-            addr = Address(name=self._name, id=msg.session_id)
+            addr = Address(name=self.address.name, id=msg.session_id)
             agent = self._agents.pop(addr, None)
             if agent:
                 await agent.stop()
