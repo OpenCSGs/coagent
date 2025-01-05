@@ -3,7 +3,7 @@ name = "coagent"
 version = "0.0.1"
 description = ""
 authors = [
-    { name = "Your Name", email = "<you@example.com>" },
+    { name = "Your Name", email = "you@example.com" },
 ]
 requires-python = ">=3.10"
 
@@ -12,7 +12,7 @@ name = "coagent"
 version = "0.0.1"
 description = ""
 authors = [
-    { name = "Your Name", email = "<you@example.com>" },
+    "Your Name <you@example.com>",
 ]
 
 [tool.poetry.dependencies]
