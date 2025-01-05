@@ -2,14 +2,18 @@
 name = "coagent"
 version = "0.0.1"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = [
+    { name = "Your Name", email = "<you@example.com>" },
+]
 requires-python = ">=3.10"
 
 [tool.poetry]
 name = "coagent"
 version = "0.0.1"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = [
+    { name = "Your Name", email = "<you@example.com>" },
+]
 
 [tool.poetry.dependencies]
 python = ">=3.10.0,<3.14"
@@ -33,10 +37,10 @@ exclude = [".cache"]
 
 [tool.ruff]
 # https://docs.astral.sh/ruff/configuration/
-exclude = ['coagent/agents/aswarm']
+exclude = ["coagent/agents/aswarm"]
 
 [tool.ruff.format]
-exclude = ['coagent/agents/aswarm']
+exclude = ["coagent/agents/aswarm"]
 
 [tool.ruff.lint]
 select = [
