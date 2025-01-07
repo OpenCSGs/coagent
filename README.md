@@ -82,7 +82,7 @@ translator = AgentSpec(
 
 async def main():
     async with LocalRuntime() as runtime:
-        await runtime.register_spec(translator)
+        await runtime.register(translator)
 
         result = translator.run_stream(
             ChatMessage(role="user", content="你好，世界").encode()
