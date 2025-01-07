@@ -4,7 +4,7 @@ from enum import Enum
 
 from coagent.agents import StreamChatAgent, confirm, RunContext, tool
 from coagent.agents.messages import ChatMessage
-from coagent.core import idle_loop, new, set_stderr_logger
+from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
 from coagent.runtimes import NATSRuntime
 
 import httpx
@@ -58,8 +58,9 @@ class CSGHub(StreamChatAgent):
 
 
 async def main(name: str):
+    csghub = AgentSpec(name, new(CSGHub))
     async with NATSRuntime.from_servers() as runtime:
-        await runtime.register(name, new(CSGHub))
+        await runtime.register(csghub)
         await idle_loop()
 
 

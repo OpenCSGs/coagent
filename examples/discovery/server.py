@@ -2,6 +2,7 @@ import argparse
 import asyncio
 
 from coagent.core import (
+    AgentSpec,
     BaseAgent,
     Context,
     GenericMessage,
@@ -27,8 +28,10 @@ async def main(name: str, description: str, server: str):
     else:
         raise ValueError(f"Unsupported server: {server}")
 
+    employee = AgentSpec(name, new(Employee), description=description)
+
     async with runtime:
-        await runtime.register(name, new(Employee), description=description)
+        await runtime.register(employee)
         await idle_loop()
 
 

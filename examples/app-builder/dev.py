@@ -1,8 +1,10 @@
 import asyncio
 from typing import AsyncIterator
 
-from coagent.agents.chat_agent import ChatMessage, chat
+from coagent.agents.chat_agent import ChatMessage
+from coagent.agents.util import chat_stream
 from coagent.core import (
+    AgentSpec,
     BaseAgent,
     Context,
     handler,
@@ -48,7 +50,7 @@ Your Final answer must be the full python code, only the python code and nothing
         ]
 
         reply = ""
-        async for chunk in chat(msgs):
+        async for chunk in chat_stream(msgs):
             yield ChatMessage(role="assistant", content=chunk.content)
             reply += chunk.content
 
@@ -56,9 +58,12 @@ Your Final answer must be the full python code, only the python code and nothing
         msg.messages.append(ChatMessage(role="user", content=reply))
 
 
+dev = AgentSpec("dev", new(DevEngineer))
+
+
 async def main():
     async with NATSRuntime.from_servers() as runtime:
-        await runtime.register("dev", new(DevEngineer))
+        await runtime.register(dev)
         await idle_loop()
 
 

@@ -2,7 +2,7 @@ import argparse
 import asyncio
 
 from coagent.agents import StreamChatAgent, RunContext, submit, tool
-from coagent.core import idle_loop, new, set_stderr_logger
+from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
 from coagent.runtimes import NATSRuntime
 
 import httpx
@@ -34,8 +34,9 @@ class DataFlow(StreamChatAgent):
 
 
 async def main(name: str):
+    dataflow = AgentSpec(name, new(DataFlow))
     async with NATSRuntime.from_servers() as runtime:
-        await runtime.register(name, new(DataFlow))
+        await runtime.register(dataflow)
         await idle_loop()
 
 

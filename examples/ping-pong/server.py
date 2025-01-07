@@ -2,6 +2,7 @@ import argparse
 import asyncio
 
 from coagent.core import (
+    AgentSpec,
     BaseAgent,
     Context,
     handler,
@@ -30,6 +31,9 @@ class Server(BaseAgent):
         return Pong()
 
 
+pong_server = AgentSpec("server", new(Server))
+
+
 async def main(server: str, auth: str):
     if server.startswith("nats://"):
         runtime = NATSRuntime.from_servers(server)
@@ -39,7 +43,7 @@ async def main(server: str, auth: str):
         raise ValueError(f"Unsupported server: {server}")
 
     async with runtime:
-        await runtime.register("server", new(Server))
+        await runtime.register(pong_server)
         await idle_loop()
 
 

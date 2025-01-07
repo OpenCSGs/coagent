@@ -1,8 +1,8 @@
 import argparse
 import asyncio
 
-from coagent.core import idle_loop, new, set_stderr_logger
 from coagent.agents import DynamicTriage
+from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
 from coagent.runtimes import NATSRuntime
 
 
@@ -13,9 +13,12 @@ class OpenCSG(DynamicTriage):
     namespace = ""
 
 
+opencsg = AgentSpec("opencsg", new(OpenCSG))
+
+
 async def main():
     async with NATSRuntime.from_servers() as runtime:
-        await runtime.register("opencsg", new(OpenCSG))
+        await runtime.register(opencsg)
         await idle_loop()
 
 

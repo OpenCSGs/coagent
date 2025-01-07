@@ -93,7 +93,7 @@ parallel = AgentSpec(
 async def main():
     async with LocalRuntime() as runtime:
         for spec in [customer, employee, investor, supplier, aggregator, parallel]:
-            await runtime.register_spec(spec)
+            await runtime.register(spec)
 
         result = await parallel.run(
             ChatMessage(

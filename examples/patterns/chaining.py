@@ -81,7 +81,7 @@ chain = AgentSpec(
 async def main():
     async with LocalRuntime() as runtime:
         for spec in [extractor, converter, sorter, formatter, chain]:
-            await runtime.register_spec(spec)
+            await runtime.register(spec)
 
         result = chain.run_stream(
             ChatMessage(

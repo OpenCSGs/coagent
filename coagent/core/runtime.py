@@ -35,7 +35,7 @@ class BaseRuntime(Runtime):
         await self.deregister()
         await self._channel.close()
 
-    async def register_spec(self, spec: AgentSpec) -> None:
+    async def register(self, spec: AgentSpec) -> None:
         spec.register(self)
 
         if self._discovery:

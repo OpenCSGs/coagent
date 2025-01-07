@@ -62,7 +62,7 @@ triage = AgentSpec(
 async def main():
     async with LocalRuntime() as runtime:
         for spec in [billing, account, triage]:
-            await runtime.register_spec(spec)
+            await runtime.register(spec)
 
         result = triage.run_stream(
             ChatMessage(

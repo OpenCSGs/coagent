@@ -5,6 +5,7 @@ from typing import AsyncIterator
 from pydantic import Field
 
 from coagent.core import (
+    AgentSpec,
     BaseAgent,
     Context,
     handler,
@@ -36,6 +37,9 @@ class StreamServer(BaseAgent):
             yield PartialPong(content=word)
 
 
+stream_server = AgentSpec("stream_server", new(StreamServer))
+
+
 async def main(server: str, auth: str):
     if server.startswith("nats://"):
         runtime = NATSRuntime.from_servers(server)
@@ -45,7 +49,7 @@ async def main(server: str, auth: str):
         raise ValueError(f"Unsupported server: {server}")
 
     async with runtime:
-        await runtime.register("stream_server", new(StreamServer))
+        await runtime.register(stream_server)
         await idle_loop()
 
 

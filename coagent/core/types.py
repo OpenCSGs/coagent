@@ -299,15 +299,8 @@ class Runtime(abc.ABC):
     async def stop(self) -> None:
         pass
 
-    async def register(
-        self, name: str, constructor: Constructor, description: str = ""
-    ) -> None:
-        await self.register_spec(
-            AgentSpec(name=name, constructor=constructor, description=description)
-        )
-
     @abc.abstractmethod
-    async def register_spec(self, spec: AgentSpec) -> None:
+    async def register(self, spec: AgentSpec) -> None:
         pass
 
     @abc.abstractmethod

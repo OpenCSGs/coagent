@@ -3,6 +3,7 @@ import os
 
 from coagent.agents.chat_agent import ChatHistory, ChatMessage
 from coagent.core import (
+    AgentSpec,
     BaseAgent,
     Context,
     handler,
@@ -60,9 +61,12 @@ class AutoGenWeatherAgent(BaseAgent):
         return msg
 
 
+autogen = AgentSpec("autogen", new(AutoGenWeatherAgent))
+
+
 async def main():
     async with NATSRuntime.from_servers() as runtime:
-        await runtime.register("autogen", new(AutoGenWeatherAgent))
+        await runtime.register(autogen)
         await idle_loop()
 
 

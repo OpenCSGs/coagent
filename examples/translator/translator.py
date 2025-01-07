@@ -1,19 +1,22 @@
 import asyncio
 
 from coagent.agents import StreamChatAgent
-from coagent.core import idle_loop, new, set_stderr_logger
+from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
 from coagent.runtimes import NATSRuntime
+
+
+translator = AgentSpec(
+    "translator",
+    new(
+        StreamChatAgent,
+        system="""You are a professional translator that can translate Chinese to English.""",
+    ),
+)
 
 
 async def main():
     async with NATSRuntime.from_servers() as runtime:
-        await runtime.register(
-            "translator",
-            new(
-                StreamChatAgent,
-                system="""You are a professional translator that can translate Chinese to English.""",
-            ),
-        )
+        await runtime.register(translator)
         await idle_loop()
 
 
