@@ -5,7 +5,14 @@ from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 from sse_starlette.sse import EventSourceResponse
 
-from coagent.core import Address, Channel, RawMessage, logger
+from coagent.core import (
+    Address,
+    Channel,
+    DiscoveryQuery,
+    DiscoveryReply,
+    RawMessage,
+    logger,
+)
 from coagent.core.exceptions import BaseError
 from coagent.core.factory import DeleteAgent
 from coagent.core.types import Runtime
@@ -24,6 +31,27 @@ class CosRuntime:
 
     async def stop(self):
         await self._runtime.stop()
+
+    async def discover(self, request: Request):
+        namespace: str = request.query_params.get("namespace", "")
+        recursive: bool = request.query_params.get("recursive", "") == "true"
+        inclusive: bool = request.query_params.get("inclusive", "") == "true"
+        detailed: bool = request.query_params.get("detailed", "") == "true"
+
+        result: RawMessage = await self._runtime.channel.publish(
+            Address(name="discovery"),
+            DiscoveryQuery(
+                namespace=namespace,
+                recursive=recursive,
+                inclusive=inclusive,
+                detailed=detailed,
+            ).encode(),
+            request=True,
+            probe=False,
+        )
+        reply: DiscoveryReply = DiscoveryReply.decode(result)
+
+        return JSONResponse(reply.model_dump(mode="json"))
 
     async def register(self, request: Request):
         data: dict = await request.json()
@@ -99,9 +127,12 @@ class CosRuntime:
     async def publish(self, request: Request):
         data: dict = await request.json()
         try:
+            msg = RawMessage.decode(data["msg"])
+            await self._update_message_header_extensions(msg, request)
+
             resp: RawMessage | None = await self._runtime.channel.publish(
-                addr=Address.model_validate(data["addr"]),
-                msg=RawMessage.model_validate(data["msg"]),
+                addr=Address.decode(data["addr"]),
+                msg=msg,
                 request=data.get("request", False),
                 reply=data.get("reply", ""),
                 timeout=data.get("timeout", 0.5),
@@ -117,9 +148,12 @@ class CosRuntime:
 
     async def publish_multi(self, request: Request):
         data: dict = await request.json()
+        msg = RawMessage.decode(data["msg"])
+        await self._update_message_header_extensions(msg, request)
+
         msgs = self._runtime.channel.publish_multi(
-            addr=Address.model_validate(data["addr"]),
-            msg=RawMessage.model_validate(data["msg"]),
+            addr=Address.decode(data["addr"]),
+            msg=msg,
             probe=data.get("probe", True),
         )
 
@@ -131,3 +165,9 @@ class CosRuntime:
                 yield dict(event="error", data=exc.encode_json())
 
         return EventSourceResponse(event_stream())
+
+    async def _update_message_header_extensions(
+        self, msg: RawMessage, request: Request
+    ) -> None:
+        """Update the message header extensions according to the data from the request."""
+        pass
