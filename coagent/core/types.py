@@ -83,6 +83,10 @@ class Address(BaseModel):
     def encode(self, mode: str = "python") -> dict:
         return self.model_dump(mode=mode)
 
+    @classmethod
+    def decode(cls, data: dict) -> Address:
+        return cls.model_validate(data)
+
 
 class MessageHeader(BaseModel):
     type: str = Field(..., description="Message type name.")
