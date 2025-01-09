@@ -1,5 +1,5 @@
 import asyncio
-from typing import AsyncIterator
+from typing import AsyncIterator, Type
 
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
@@ -7,7 +7,8 @@ from sse_starlette.sse import EventSourceResponse
 
 from coagent.core import (
     Address,
-    Channel,
+    AgentSpec,
+    Constructor,
     DiscoveryQuery,
     DiscoveryReply,
     RawMessage,
@@ -19,6 +20,25 @@ from coagent.core.types import Runtime
 from coagent.core.util import clear_queue
 
 from coagent.cos.agent import RemoteAgent, AgentCreated
+
+
+class _CosConstructor(Constructor):
+    """A constructor for creating CoS agents."""
+
+    def __init__(
+        self, typ: Type, queue: asyncio.Queue, registry: dict[Address, RemoteAgent]
+    ) -> None:
+        super().__init__(typ)
+        self.queue = queue
+        self.registry = registry
+
+    async def __post_call__(self, agent: RemoteAgent) -> None:
+        logger.info(f"[CoS] Created agent {agent.id}")
+
+        msg = AgentCreated(addr=agent.address)
+        await self.queue.put(msg.encode())
+
+        self.registry[agent.address] = agent
 
 
 class CosRuntime:
@@ -60,23 +80,10 @@ class CosRuntime:
 
         queue: asyncio.Queue[RawMessage] = asyncio.Queue()
 
-        async def create_agent(channel: Channel, addr: Address):
-            logger.debug(f"[HTTPRuntime] creating agent with addr {addr}")
-
-            msg = AgentCreated(addr=addr)
-            await queue.put(msg.encode())
-
-            agent = RemoteAgent()
-            agent.init(channel, addr)
-
-            self._agents[addr] = agent
-
-            return agent
-
-        # This is a hack to convert create_agent to an instance of Constructor.
-        create_agent.type = RemoteAgent
-
-        await self._runtime.register(name, create_agent, description)
+        spec = AgentSpec(
+            name, _CosConstructor(RemoteAgent, queue, self._agents), description
+        )
+        await self._runtime.register(spec)
 
         async def event_stream() -> AsyncIterator[str]:
             try:
