@@ -118,13 +118,23 @@ class RawMessage(BaseModel):
 
 class Constructor:
     def __init__(self, typ: Type, *args: Any, **kwargs: Any) -> None:
-        self.type = typ
-        self.args = args
-        self.kwargs = kwargs
+        self.type: Type = typ
+        self.args: tuple[Any] = args
+        self.kwargs: dict[str, Any] = kwargs
+
+        # When a `__post_call__()` method is defined on the class, it will be
+        # called by `__call__()`, normally as `self.__post_call__(agent)`.
+        self._post_call_fn: Callable[[Agent], Awaitable[None]] | None = getattr(
+            self, "__post_call__", None
+        )
 
     async def __call__(self, channel: Channel, address: Address) -> Agent:
         agent = self.type(*self.args, **self.kwargs)
         agent.init(channel, address)
+
+        if self._post_call_fn is not None:
+            await self._post_call_fn(agent)
+
         return agent
 
 
