@@ -7,12 +7,14 @@ from pydantic import BaseModel, ValidationError
 from .exceptions import MessageDecodeError, InternalError
 from .logger import logger
 from .messages import (
+    Cancel,
+    ControlMessage,
+    Empty,
+    ProbeAgent,
     Message,
     Started,
     Stopped,
     SetReplyAgent,
-    ProbeAgent,
-    Empty,
     StopIteration,
 )
 from .types import Address, Agent, Channel, RawMessage, State, Subscription
@@ -103,6 +105,10 @@ class BaseAgent(Agent):
 
         self._sub: Subscription | None = None
 
+        # The task for handling DATA messages.
+        self._handle_data_task: asyncio.Task | None = None
+        self._pending_queue: asyncio.Queue[Message] = asyncio.Queue()
+
         self._timeout: float = timeout
         self._last_msg_received_at: float = time.time()
 
@@ -123,6 +129,7 @@ class BaseAgent(Agent):
         self._handlers: dict[Type, Handler] = handlers
         # A list of message types associated with this agent.
         self._message_types: dict[str, Type[Message]] = {
+            "Cancel": Cancel,
             "Started": Started,
             "Stopped": Stopped,
             "SetReplyAgent": SetReplyAgent,
@@ -156,6 +163,8 @@ class BaseAgent(Agent):
         # Subscribe the agent to its own address.
         self._sub = await self.channel.subscribe(self.address, handler=self.receive)
 
+        self._handle_data_task = asyncio.create_task(self._handle_data())
+
         # Send a `Started` message to the current agent.
         await self.channel.publish(self.address, Started().encode(), probe=False)
 
@@ -164,6 +173,9 @@ class BaseAgent(Agent):
 
         # Send a `Stopped` message to the current agent.
         await self.channel.publish(self.address, Stopped().encode(), probe=False)
+
+        if self._handle_data_task:
+            self._handle_data_task.cancel()
 
         # Unsubscribe the agent from its own address.
         if self._sub:
@@ -205,24 +217,43 @@ class BaseAgent(Agent):
                 logger.error(f"Failed to decode message: {err}")
             return
 
+        if isinstance(msg, ControlMessage):
+            await self._handle_control(msg)
+        else:
+            await self._pending_queue.put(msg)
+
+    async def _handle_control(self, msg: ControlMessage) -> None:
+        """Handle CONTROL messages."""
         match msg:
-            case Started():
-                await self.started()
+            case Cancel():
+                if self._handle_data_task:
+                    self._handle_data_task.cancel()
 
-            case Stopped():
-                await self.stopped()
+    async def _handle_data(self) -> None:
+        """Handle DATA messages."""
+        while True:
+            msg = await self._pending_queue.get()
+            self._pending_queue.task_done()
 
-            case SetReplyAgent():
-                self.reply_address = msg.address
+            match msg:
+                case Started():
+                    await self.started()
 
-            case ProbeAgent() | Empty():
-                # Do not handle probes and empty messages.
-                pass
+                case Stopped():
+                    await self.stopped()
 
-            case _:
-                await self._handle(msg, Context())
+                case SetReplyAgent():
+                    self.reply_address = msg.address
 
-    async def _handle(self, msg: Message, ctx: Context) -> None:
+                case ProbeAgent() | Empty():
+                    # Do not handle probes and empty messages.
+                    pass
+
+                case _:
+                    await self._handle_data_custom(msg, Context())
+
+    async def _handle_data_custom(self, msg: Message, ctx: Context) -> None:
+        """Handle user-defined DATA messages."""
         h: Handler = self.__get_handler(msg)
         result = h(self, msg, ctx)
 
@@ -233,6 +264,8 @@ class BaseAgent(Agent):
             try:
                 async for x in result:
                     await pub(x)
+            except asyncio.CancelledError:
+                raise
             except Exception as exc:
                 err = InternalError.from_exception(exc)
                 await pub(err.encode_message())
@@ -241,6 +274,8 @@ class BaseAgent(Agent):
         else:
             try:
                 x = await result or Empty()
+            except asyncio.CancelledError:
+                raise
             except Exception as exc:
                 err = InternalError.from_exception(exc)
                 x = err.encode_message()

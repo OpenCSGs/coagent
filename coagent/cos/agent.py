@@ -55,7 +55,7 @@ class RemoteAgent(BaseAgent):
         msg = AgentStopped(addr=self.address)
         await self.queue.put(msg.encode())
 
-    async def _handle(self, msg: Message, ctx: Context) -> None:
+    async def _handle_data_custom(self, msg: Message, ctx: Context) -> None:
         """Override the default handler to put the message into the queue."""
         await self.queue.put(msg.encode())
 

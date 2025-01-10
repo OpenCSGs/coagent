@@ -54,6 +54,24 @@ class Message(BaseModel):
         return cls.model_validate(data)
 
 
+class ControlMessage(Message):
+    """A control message for controlling the behavior of the corresponding agent.
+
+    Any CONTROL message should be a subclass of this class. And any other messages,
+    inherited from `Message`, are DATA messages.
+
+    Note that for a given agent, control messages
+    """
+
+    pass
+
+
+class Cancel(ControlMessage):
+    """A message to cancel the DATA message processing of an agent."""
+
+    pass
+
+
 class GenericMessage(Message):
     """A generic message that can be used for any type of message."""
 
