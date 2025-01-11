@@ -1,48 +1,10 @@
 import asyncio
-import pytest
-from typing import Callable, Awaitable, AsyncIterator
 
-from coagent.core.types import Address, RawMessage, Channel, Subscription
+import pytest
+
+from coagent.core.types import Address
 from coagent.core.agent import BaseAgent, Context, handler
 from coagent.core.messages import Cancel, Message
-
-
-class TestChannel(Channel):
-    async def connect(self) -> None:
-        pass
-
-    async def close(self) -> None:
-        pass
-
-    async def publish(
-        self,
-        addr: Address,
-        msg: RawMessage,
-        request: bool = False,
-        reply: str = "",
-        timeout: float = 0.5,
-        probe: bool = True,
-    ) -> RawMessage | None:
-        pass
-
-    async def publish_multi(
-        self,
-        addr: Address,
-        msg: RawMessage,
-        probe: bool = True,
-    ) -> AsyncIterator[RawMessage]:
-        pass
-
-    async def subscribe(
-        self,
-        addr: Address,
-        handler: Callable[[RawMessage], Awaitable[None]],
-        queue: str = "",
-    ) -> Subscription:
-        pass
-
-    async def new_reply_topic(self) -> str:
-        pass
 
 
 class Run(Message):
@@ -64,9 +26,9 @@ class BlockingAgent(BaseAgent):
 
 class TestBlockingAgent:
     @pytest.mark.asyncio
-    async def test_receive(self):
+    async def test_receive(self, test_channel):
         agent = BlockingAgent()
-        agent.init(TestChannel(), Address(name="test", id="0"))
+        agent.init(test_channel, Address(name="test", id="0"))
         await agent.start()
 
         await agent.receive(Run().encode())
