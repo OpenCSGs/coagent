@@ -55,19 +55,25 @@ class Message(BaseModel):
 
 
 class ControlMessage(Message):
-    """A control message for controlling the behavior of the corresponding agent.
+    """ControlMessage is the base class for all control messages.
+
+    A control message is used to control the behavior of an agent. For example,
+    a `Cancel` message can be sent to an agent to cancel the processing of DATA
+    messages.
+
+    Note that for a given agent, CONTROL messages and DATA messages are processed
+    in separate coroutines. So the control messages can be processed in a timely
+    manner without being blocked by the DATA messages.
 
     Any CONTROL message should be a subclass of this class. And any other messages,
     inherited from `Message`, are DATA messages.
-
-    Note that for a given agent, control messages
     """
 
     pass
 
 
 class Cancel(ControlMessage):
-    """A message to cancel the DATA message processing of an agent."""
+    """A control message to cancel the DATA message processing of an agent."""
 
     pass
 
