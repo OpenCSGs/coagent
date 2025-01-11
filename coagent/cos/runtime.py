@@ -14,6 +14,7 @@ from coagent.core import (
     RawMessage,
     logger,
 )
+from coagent.core.messages import Cancel
 from coagent.core.exceptions import BaseError
 from coagent.core.factory import DeleteAgent
 from coagent.core.types import Runtime
@@ -137,8 +138,9 @@ class CosRuntime:
             msg = RawMessage.decode(data["msg"])
             await self._update_message_header_extensions(msg, request)
 
+            addr = Address.decode(data["addr"])
             resp: RawMessage | None = await self._runtime.channel.publish(
-                addr=Address.decode(data["addr"]),
+                addr=addr,
                 msg=msg,
                 request=data.get("request", False),
                 reply=data.get("reply", ""),
@@ -147,6 +149,11 @@ class CosRuntime:
             )
         except BaseError as exc:
             return JSONResponse(exc.encode(mode="json"), status_code=404)
+        except asyncio.CancelledError:
+            # Disconnected from the client.
+
+            # Cancel the ongoing operation.
+            await self._runtime.channel.publish(addr, Cancel().encode())
 
         if resp is None:
             return Response(status_code=204)
@@ -158,8 +165,9 @@ class CosRuntime:
         msg = RawMessage.decode(data["msg"])
         await self._update_message_header_extensions(msg, request)
 
+        addr = Address.decode(data["addr"])
         msgs = self._runtime.channel.publish_multi(
-            addr=Address.decode(data["addr"]),
+            addr=addr,
             msg=msg,
             probe=data.get("probe", True),
         )
@@ -170,11 +178,16 @@ class CosRuntime:
                     yield dict(data=raw.encode_json())
             except BaseError as exc:
                 yield dict(event="error", data=exc.encode_json())
+            except asyncio.CancelledError:
+                # Disconnected from the client.
+
+                # Cancel the ongoing operation.
+                await self._runtime.channel.publish(addr, Cancel().encode())
 
         return EventSourceResponse(event_stream())
 
     async def _update_message_header_extensions(
         self, msg: RawMessage, request: Request
     ) -> None:
-        """Update the message header extensions according to the data from the request."""
+        """Update the message header extensions according to the request data."""
         pass
