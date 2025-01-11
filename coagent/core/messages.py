@@ -62,7 +62,7 @@ class ControlMessage(Message):
     messages.
 
     Note that for a given agent, CONTROL messages and DATA messages are processed
-    in separate coroutines. So the control messages can be processed in a timely
+    in separate coroutines. So the CONTROL messages can be processed in a timely
     manner without being blocked by the DATA messages.
 
     Any CONTROL message should be a subclass of this class. And any other messages,

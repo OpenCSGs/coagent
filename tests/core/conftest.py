@@ -1,11 +1,16 @@
+import asyncio
+import functools
+import inspect
 from typing import Callable, Awaitable, AsyncIterator
 
 import pytest
 
-from coagent.core.types import Address, RawMessage, Channel, Subscription
+from coagent.core.types import Address, Agent, RawMessage, Channel, Subscription
+from coagent.core.util import idle_loop
+from coagent.runtimes.local_runtime import LocalChannel
 
 
-class TestChannel(Channel):
+class NopChannel(Channel):
     async def connect(self) -> None:
         pass
 
@@ -44,5 +49,50 @@ class TestChannel(Channel):
 
 
 @pytest.fixture
-def test_channel() -> TestChannel:
-    return TestChannel()
+def nop_channel() -> NopChannel:
+    return NopChannel()
+
+
+@pytest.fixture
+def local_channel() -> LocalChannel:
+    return LocalChannel()
+
+
+def helper_func(func):
+    """A decorator to create a fixture that returns the wrapped function."""
+
+    def wrapper():
+        if inspect.iscoroutinefunction(func):
+
+            @functools.wraps(func)
+            async def run(*args, **kwargs):
+                return await func(*args, **kwargs)
+        else:
+
+            @functools.wraps(func)
+            def run(*args, **kwargs):
+                return func(*args, **kwargs)
+
+        return run
+
+    return wrapper
+
+
+@pytest.fixture
+@helper_func
+def run_agent_in_task(agent: Agent) -> asyncio.Task:
+    """Run the given agent in a task."""
+
+    async def run():
+        await agent.start()
+        await idle_loop()
+        await agent.stop()
+
+    return asyncio.create_task(run())
+
+
+@pytest.fixture
+@helper_func
+async def yield_control():
+    """A fixture to yield control to other coroutines."""
+    await asyncio.sleep(0.000001)

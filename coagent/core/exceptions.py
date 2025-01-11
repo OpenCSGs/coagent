@@ -88,7 +88,7 @@ class InternalError(BaseError):
 
     @classmethod
     def from_exception(
-        cls, exc: Exception, with_stack_trace: bool = True
+        cls, exc: BaseException, with_stack_trace: bool = True
     ) -> InternalError:
         if with_stack_trace:
             exc_info = "".join(traceback.format_exception(exc))

@@ -260,26 +260,31 @@ class BaseAgent(Agent):
         async def pub(x: Message):
             await self.__send_reply(msg.reply, x)
 
+        async def pub_exc(exc: BaseException):
+            err = InternalError.from_exception(exc)
+            await pub(err.encode_message())
+
         if is_async_iterator(result):
             try:
                 async for x in result:
                     await pub(x)
-            except asyncio.CancelledError:
+            except asyncio.CancelledError as exc:
+                await pub_exc(exc)
                 raise
             except Exception as exc:
-                err = InternalError.from_exception(exc)
-                await pub(err.encode_message())
-            # End of the iteration, send an extra StopIteration message.
-            await pub(StopIteration())
+                await pub_exc(exc)
+            finally:
+                # End of the iteration, send an extra StopIteration message.
+                await pub(StopIteration())
         else:
             try:
                 x = await result or Empty()
-            except asyncio.CancelledError:
+                await pub(x)
+            except asyncio.CancelledError as exc:
+                await pub_exc(exc)
                 raise
             except Exception as exc:
-                err = InternalError.from_exception(exc)
-                x = err.encode_message()
-            await pub(x)
+                await pub_exc(exc)
 
     async def __send_reply(self, in_msg_reply: Address, out_msg: Message) -> bool:
         reply_address = self.reply_address or in_msg_reply
