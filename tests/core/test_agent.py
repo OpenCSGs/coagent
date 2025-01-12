@@ -3,7 +3,7 @@ from typing import AsyncIterator
 
 import pytest
 
-from coagent.core.types import Address
+from coagent.core.types import Address, Agent, Channel, RawMessage
 from coagent.core.agent import BaseAgent, Context, handler
 from coagent.core.exceptions import BaseError
 from coagent.core.messages import Cancel, Message
@@ -43,6 +43,22 @@ class StreamAgent(BaseAgent):
             yield Reply()
 
 
+class _TestFactory:
+    def __init__(self, channel: Channel, address: Address):
+        self.channel = channel
+        self.address = address
+
+        self.agent = None
+        self.sub = None
+
+    async def receive(self, msg: RawMessage) -> None:
+        await self.agent.stop()
+
+    async def start(self, agent: Agent) -> None:
+        self.agent = agent
+        self.sub = await self.channel.subscribe(self.address, self.receive)
+
+
 class TestTrivialAgent:
     @pytest.mark.asyncio
     async def test_normal(self, local_channel, run_agent_in_task, yield_control):
@@ -60,9 +76,13 @@ class TestTrivialAgent:
 
     @pytest.mark.asyncio
     async def test_cancel(self, local_channel, run_agent_in_task, yield_control):
+        test_factory = _TestFactory(local_channel, Address(name="test_1"))
+
         agent = TrivialAgent(wait_s=10)
         addr = Address(name="test", id="1")
-        agent.init(local_channel, addr)
+        agent.init(local_channel, addr, test_factory.address)
+
+        await test_factory.start(agent)
 
         _task = run_agent_in_task(agent)
         await yield_control()
@@ -97,9 +117,13 @@ class TestStreamAgent:
 
     @pytest.mark.asyncio
     async def test_cancel(self, local_channel, run_agent_in_task, yield_control):
+        test_factory = _TestFactory(local_channel, Address(name="test_3"))
+
         agent = StreamAgent(wait_s=10)
         addr = Address(name="test", id="3")
-        agent.init(local_channel, addr)
+        agent.init(local_channel, addr, test_factory.address)
+
+        await test_factory.start(agent)
 
         _task = run_agent_in_task(agent)
         await yield_control()

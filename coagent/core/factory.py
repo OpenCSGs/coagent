@@ -63,8 +63,9 @@ class Factory(BaseAgent):
         await super().start()
 
         # Generate a unique address and create an instance subscription.
-        self._instance_address = Address(name=self.address.name, id=uuid.uuid4().hex)
-        self._instance_sub = self.channel.subscribe(
+        unique_id = uuid.uuid4().hex
+        self._instance_address = Address(name=f"{self.address.name}_{unique_id}")
+        self._instance_sub = await self.channel.subscribe(
             self._instance_address, handler=self.receive
         )
 

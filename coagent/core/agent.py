@@ -196,7 +196,7 @@ class BaseAgent(Agent):
 
         if self.factory_address:
             msg = DeleteAgent(session_id=self.address.id).encode()
-            await self.channel.publish(self.factory_address, msg)
+            await self.channel.publish(self.factory_address, msg, probe=False)
 
     async def started(self) -> None:
         """This handler is called after the agent is started."""
@@ -243,8 +243,6 @@ class BaseAgent(Agent):
         """Handle CONTROL messages."""
         match msg:
             case Cancel():
-                if self._handle_data_task:
-                    self._handle_data_task.cancel()
                 # Delete the agent when cancelled.
                 await self.delete()
 
