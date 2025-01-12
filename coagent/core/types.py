@@ -128,9 +128,11 @@ class Constructor:
             self, "__post_call__", None
         )
 
-    async def __call__(self, channel: Channel, address: Address) -> Agent:
+    async def __call__(
+        self, channel: Channel, address: Address, factory_address: Address | None = None
+    ) -> Agent:
         agent = self.type(*self.args, **self.kwargs)
-        agent.init(channel, address)
+        agent.init(channel, address, factory_address)
 
         if self._post_call_fn is not None:
             await self._post_call_fn(agent)
@@ -157,7 +159,9 @@ class Agent(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def init(self, channel: Channel, address: Address) -> None:
+    def init(
+        self, channel: Channel, address: Address, factory_address: Address | None = None
+    ) -> None:
         """Initialize the agent with the given channel and address."""
         pass
 
@@ -174,6 +178,11 @@ class Agent(abc.ABC):
     @abc.abstractmethod
     async def stop(self) -> None:
         """Stop the current agent."""
+        pass
+
+    @abc.abstractmethod
+    async def delete(self) -> None:
+        """Request to delete the current agent."""
         pass
 
     @abc.abstractmethod

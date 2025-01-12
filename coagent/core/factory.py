@@ -1,4 +1,5 @@
 import asyncio
+import uuid
 
 from .agent import BaseAgent, Context, handler
 from .logger import logger
@@ -39,17 +40,40 @@ class Factory(BaseAgent):
         self._agents: dict[Address, Agent] = {}
         self._lock: asyncio.Lock = asyncio.Lock()
 
+        # Instance subscription for the current factory agent.
+        #
+        # Note that there are two types of subscriptions:
+        #
+        # 1. `self._sub`: The subscription for receiving CreateAgent messages to
+        #    create new agents. This subscription is created by `self._create_subscription`,
+        #    and multiple subscriptions work in load balancing mode. That is, each
+        #    CreateAgent message will be randomly distributed to one of the factory agents.
+        #
+        # 2. `self._instance_sub`: The subscription for receiving messages
+        #    specifically to the current factory agent instance. For example,
+        #    the factory agent instance will receive DeleteAgent messages to
+        #    delete agents created by itself.
+        self._instance_address: Address | None = None
+        self._instance_sub: Subscription | None = None
+
         self._recycle_task: asyncio.Task | None = None
 
     async def start(self) -> None:
         """Since factory is a special agent, we need to start it in a different way."""
         await super().start()
 
+        # Generate a unique address and create an instance subscription.
+        self._instance_address = Address(name=self.address.name, id=uuid.uuid4().hex)
+        self._instance_sub = self.channel.subscribe(
+            self._instance_address, handler=self.receive
+        )
+
         # Start the recycle loop.
         self._recycle_task = asyncio.create_task(self._recycle())
 
     async def _create_subscription(self) -> Subscription:
-        # Each CreateAgent message can only be received and handled by one factory agent.
+        # Each CreateAgent message can only be received and handled by one of
+        # the factory agents.
         #
         # Note that we specify a queue parameter to distribute requests among
         # multiple factory agents of the same type of primitive agent.
@@ -61,7 +85,7 @@ class Factory(BaseAgent):
 
     async def stop(self) -> None:
         """Since factory is a special agent, we need to stop it in a different way."""
-        # Stop all agents.
+        # Delete all agents.
         for agent in self._agents.values():
             await agent.stop()
         self._agents.clear()
@@ -69,6 +93,9 @@ class Factory(BaseAgent):
         # Cancel the recycle loop.
         if self._recycle_task:
             self._recycle_task.cancel()
+
+        if self._instance_sub:
+            await self._instance_sub.unsubscribe()
 
         await super().stop()
 
@@ -115,17 +142,16 @@ class Factory(BaseAgent):
             if addr in self._agents:
                 return
 
-            # Create an agent with the given channel and address.
-            agent = await self._spec.constructor(self.channel, addr)
+            # Create an agent with the given channel, address and factory address.
+            agent = await self._spec.constructor(
+                self.channel, addr, self._instance_address
+            )
             self._agents[addr] = agent
 
             await agent.start()
 
     @handler
     async def delete_agent(self, msg: DeleteAgent, ctx: Context) -> None:
-        # FIXME: The DeleteAgent will not always be received by the right
-        #        factory agent since there are multiple factories working
-        #        in load balancing mode.
         async with self._lock:
             addr = Address(name=self.address.name, id=msg.session_id)
             agent = self._agents.pop(addr, None)

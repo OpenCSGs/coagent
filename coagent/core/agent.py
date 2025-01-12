@@ -99,9 +99,10 @@ class BaseAgent(Agent):
     """
 
     def __init__(self, timeout: float = 60):
-        # Note that channel and address will be set by the runtime after agent creation.
+        # The following attributes will be set by the runtime after agent creation.
         self.channel: Channel | None = None
         self.address: Address | None = None
+        self.factory_address: Address | None = None
 
         self._sub: Subscription | None = None
 
@@ -145,9 +146,12 @@ class BaseAgent(Agent):
         else:
             return self.address.name
 
-    def init(self, channel: Channel, address: Address) -> None:
+    def init(
+        self, channel: Channel, address: Address, factory_address: Address | None = None
+    ) -> None:
         self.channel = channel
         self.address = address
+        self.factory_address = factory_address
 
     async def get_state(self) -> State:
         async with self._lock:
@@ -185,6 +189,14 @@ class BaseAgent(Agent):
 
         if self._handle_data_task:
             self._handle_data_task.cancel()
+
+    async def delete(self) -> None:
+        """Request to delete the current agent."""
+        from .factory import DeleteAgent
+
+        if self.factory_address:
+            msg = DeleteAgent(session_id=self.address.id).encode()
+            await self.channel.publish(self.factory_address, msg)
 
     async def started(self) -> None:
         """This handler is called after the agent is started."""
