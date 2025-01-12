@@ -11,6 +11,7 @@ from .types import (
     Address,
     AgentSpec,
     RawMessage,
+    Subscription,
 )
 from .util import Trie
 
@@ -125,13 +126,7 @@ class Discovery(BaseAgent):
 
     async def start(self) -> None:
         """Since discovery is a special agent, we need to start it in a different way."""
-
-        # Each query message can only be received and handled by one discovery aggregator.
-        self._sub = await self.channel.subscribe(
-            self.address,
-            handler=self.receive,
-            queue=f"{self.address.topic}_workers",
-        )
+        await super().start()
 
         # Create and start the local discovery server.
         self._server = DiscoveryServer()
@@ -139,13 +134,20 @@ class Discovery(BaseAgent):
         self._server.init(self.channel, Address(name=f"{self.address.name}.server"))
         await self._server.start()
 
+    async def _create_subscription(self) -> Subscription:
+        # Each query message can only be received and handled by one discovery aggregator.
+        return await self.channel.subscribe(
+            self.address,
+            handler=self.receive,
+            queue=f"{self.address.topic}_workers",
+        )
+
     async def stop(self) -> None:
         """Since discovery is a special agent, we need to stop it in a different way."""
         if self._server:
             await self._server.stop()
 
-        if self._sub:
-            await self._sub.unsubscribe()
+        await super().stop()
 
     async def register(self, spec: AgentSpec) -> None:
         if spec.name == self.address.name:
@@ -250,9 +252,7 @@ class DiscoveryServer(BaseAgent):
 
     async def start(self) -> None:
         """Since discovery server is a special agent, we need to start it in a different way."""
-
-        # Subscribe the agent to its own address.
-        self._sub = await self.channel.subscribe(self.address, handler=self.receive)
+        await super().start()
 
         # Upon startup, the current discovery server has no agent-subscriptions.
         # Therefore, it's necessary to synchronize the existing agent-subscriptions
@@ -282,13 +282,6 @@ class DiscoveryServer(BaseAgent):
             await asyncio.sleep(0.2)  # TODO: Choose a better timeout.
         finally:
             await sub.unsubscribe()
-
-    async def stop(self) -> None:
-        """Since discovery server is a special agent, we need to stop it in a different way."""
-
-        # Unsubscribe the agent from its own address.
-        if self._sub:
-            await self._sub.unsubscribe()
 
     async def register(self, spec: AgentSpec) -> None:
         if spec.name == self.address.name:

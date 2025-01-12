@@ -8,6 +8,7 @@ from .types import (
     Agent,
     AgentSpec,
     State,
+    Subscription,
 )
 
 
@@ -42,25 +43,24 @@ class Factory(BaseAgent):
 
     async def start(self) -> None:
         """Since factory is a special agent, we need to start it in a different way."""
-        # Subscribe the factory to the given address.
+        await super().start()
+
+        # Start the recycle loop.
+        self._recycle_task = asyncio.create_task(self._recycle())
+
+    async def _create_subscription(self) -> Subscription:
+        # Each CreateAgent message can only be received and handled by one factory agent.
         #
         # Note that we specify a queue parameter to distribute requests among
         # multiple factory agents of the same type of primitive agent.
-        self._sub = await self.channel.subscribe(
+        return await self.channel.subscribe(
             self.address,
             handler=self.receive,
             queue=f"{self.address.topic}_workers",
         )
 
-        # Start the recycle loop.
-        self._recycle_task = asyncio.create_task(self._recycle())
-
     async def stop(self) -> None:
         """Since factory is a special agent, we need to stop it in a different way."""
-        # Unsubscribe the factory from the address.
-        if self._sub:
-            await self._sub.unsubscribe()
-
         # Stop all agents.
         for agent in self._agents.values():
             await agent.stop()
@@ -69,6 +69,8 @@ class Factory(BaseAgent):
         # Cancel the recycle loop.
         if self._recycle_task:
             self._recycle_task.cancel()
+
+        await super().stop()
 
     async def _recycle(self) -> None:
         """The recycle loop for deleting idle agents."""

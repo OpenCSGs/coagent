@@ -161,12 +161,17 @@ class BaseAgent(Agent):
         """Start the current agent."""
 
         # Subscribe the agent to its own address.
-        self._sub = await self.channel.subscribe(self.address, handler=self.receive)
-
-        self._handle_data_task = asyncio.create_task(self._handle_data())
+        self._sub = await self._create_subscription()
 
         # Send a `Started` message to the current agent.
         await self.channel.publish(self.address, Started().encode(), probe=False)
+
+        if not self._handle_data_task:
+            self._handle_data_task = asyncio.create_task(self._handle_data())
+
+    async def _create_subscription(self) -> Subscription:
+        # Subscribe the agent's receive method to its own address.
+        return await self.channel.subscribe(self.address, handler=self.receive)
 
     async def stop(self) -> None:
         """Stop the current agent."""
@@ -174,12 +179,12 @@ class BaseAgent(Agent):
         # Send a `Stopped` message to the current agent.
         await self.channel.publish(self.address, Stopped().encode(), probe=False)
 
-        if self._handle_data_task:
-            self._handle_data_task.cancel()
-
         # Unsubscribe the agent from its own address.
         if self._sub:
             await self._sub.unsubscribe()
+
+        if self._handle_data_task:
+            self._handle_data_task.cancel()
 
     async def started(self) -> None:
         """This handler is called after the agent is started."""
