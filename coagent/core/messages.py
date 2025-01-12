@@ -73,7 +73,7 @@ class ControlMessage(Message):
 
 
 class Cancel(ControlMessage):
-    """A control message to cancel the DATA message processing of an agent."""
+    """A control message to cancel the processing of an agent and delete it."""
 
     pass
 

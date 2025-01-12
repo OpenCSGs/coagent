@@ -245,6 +245,8 @@ class BaseAgent(Agent):
             case Cancel():
                 if self._handle_data_task:
                     self._handle_data_task.cancel()
+                # Delete the agent when cancelled.
+                await self.delete()
 
     async def _handle_data(self) -> None:
         """Handle DATA messages."""
