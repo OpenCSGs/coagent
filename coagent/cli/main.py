@@ -20,7 +20,10 @@ def jq_filter(data: dict, filter: str) -> str:
     return jq.compile(filter).input(data).first()
 
 
-def print_msg(msg: RawMessage, oneline: bool, filter: str) -> None:
+def print_msg(msg: RawMessage | None, oneline: bool, filter: str) -> None:
+    if msg is None:
+        return
+
     output = msg.encode()
 
     content = output.get("content")
@@ -35,13 +38,17 @@ def print_msg(msg: RawMessage, oneline: bool, filter: str) -> None:
 async def run(
     server: str,
     auth: str,
-    agent: str,
+    address: str,
     msg: RawMessage,
     stream: bool,
     oneline: bool,
     filter: str,
 ):
-    session_id = uuid.uuid4().hex
+    parts = address.split(":", 1)
+    if len(parts) == 2:
+        agent_type, session_id = parts
+    else:
+        agent_type, session_id = parts[0], uuid.uuid4().hex
 
     if server.startswith("nats://"):
         runtime = NATSRuntime.from_servers(server)
@@ -51,7 +58,7 @@ async def run(
         raise ValueError(f"Unsupported server: {server}")
 
     async with runtime:
-        addr = Address(name=agent, id=session_id)
+        addr = Address(name=agent_type, id=session_id)
         try:
             if not stream:
                 response = await runtime.channel.publish(
@@ -68,7 +75,9 @@ async def run(
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "agent", type=str, help="The type of the agent to communicate with."
+        "address",
+        type=str,
+        help="The address of the agent to communicate with. Format: `agent_type[:session_id]`. (e.g. `pong` or `pong:123`)",
     )
     parser.add_argument(
         "-d",
@@ -136,7 +145,7 @@ def main():
         run(
             args.server,
             args.auth,
-            args.agent,
+            args.address,
             msg,
             args.stream,
             args.oneline,
