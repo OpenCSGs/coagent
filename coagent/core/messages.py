@@ -58,12 +58,14 @@ class ControlMessage(Message):
     """ControlMessage is the base class for all control messages.
 
     A control message is used to control the behavior of an agent. For example,
-    a `Cancel` message can be sent to an agent to cancel the processing of DATA
-    messages.
+    a `Cancel` message can be sent to an agent to cancel the processing of the
+    agent and delete it.
 
-    Note that for a given agent, CONTROL messages and DATA messages are processed
-    in separate coroutines. So the CONTROL messages can be processed in a timely
-    manner without being blocked by the DATA messages.
+    For a specific agent, CONTROL messages and DATA messages are processed in
+    separate coroutines, so CONTROL messages can be processed in a timely manner
+    without being blocked by DATA messages. By design, CONTROL messages are
+    management commands that must be processed instantly and do not wait for
+    any return value.
 
     Any CONTROL message should be a subclass of this class. And any other messages,
     inherited from `Message`, are DATA messages.

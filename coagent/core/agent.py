@@ -245,6 +245,15 @@ class BaseAgent(Agent):
             case Cancel():
                 # Delete the agent when cancelled.
                 await self.delete()
+            case _:
+                await self._handle_control_custom(msg, Context())
+
+    async def _handle_control_custom(self, msg: ControlMessage, ctx: Context) -> None:
+        """Handle user-defined CONTROL messages."""
+        h: Handler = self.__get_handler(msg)
+        # By design, CONTROL messages are management commands that must be
+        # processed instantly and do not wait for any return value.
+        await h(self, msg, ctx)
 
     async def _handle_data(self) -> None:
         """Handle DATA messages."""
