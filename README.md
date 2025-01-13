@@ -356,6 +356,7 @@ triage = AgentSpec(
 - [stream-ping-pong](examples/stream-ping-pong)
 - [discovery](examples/discovery)
 - [translator](examples/translator)
+- [notification](examples/notification)
 - [opencsg](examples/opencsg)
 - [app-builder](examples/app-builder)
 - [autogen](examples/autogen)
