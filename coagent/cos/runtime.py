@@ -16,7 +16,6 @@ from coagent.core import (
 )
 from coagent.core.messages import Cancel
 from coagent.core.exceptions import BaseError
-from coagent.core.factory import DeleteAgent
 from coagent.core.types import Runtime
 from coagent.core.util import clear_queue
 
@@ -122,11 +121,7 @@ class CosRuntime:
                 # Disconnected from the client.
 
                 # Delete the corresponding agent.
-                factory_addr = Address(name=addr.name)
-                delete_msg = DeleteAgent(session_id=addr.id).encode()
-                await self._runtime.channel.publish(
-                    factory_addr, delete_msg, probe=False
-                )
+                await agent.delete()
 
                 raise
 
@@ -134,11 +129,12 @@ class CosRuntime:
 
     async def publish(self, request: Request):
         data: dict = await request.json()
+        addr = Address.decode(data["addr"])
+        msg = RawMessage.decode(data["msg"])
+
         try:
-            msg = RawMessage.decode(data["msg"])
             await self._update_message_header_extensions(msg, request)
 
-            addr = Address.decode(data["addr"])
             resp: RawMessage | None = await self._runtime.channel.publish(
                 addr=addr,
                 msg=msg,

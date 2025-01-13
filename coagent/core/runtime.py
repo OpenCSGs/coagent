@@ -6,7 +6,7 @@ import pydantic
 from .discovery import Discovery
 from .exceptions import BaseError
 from .messages import StopIteration, Error
-from .factory import Factory, DeleteAgent
+from .factory import Factory
 from .types import (
     AgentSpec,
     Channel,
@@ -68,11 +68,6 @@ class BaseRuntime(Runtime):
     @property
     def channel(self) -> Channel:
         return self._channel
-
-    async def delete(self, addr: Address) -> None:
-        factory_addr = Address(name=addr.name)
-        msg = DeleteAgent(session_id=addr.id).encode()
-        await self._channel.publish(factory_addr, msg, probe=False)
 
 
 class BaseChannel(Channel):
