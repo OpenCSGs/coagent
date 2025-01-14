@@ -6,7 +6,7 @@ import pytest
 from coagent.core.types import Address, Agent, Channel, RawMessage
 from coagent.core.agent import BaseAgent, Context, handler
 from coagent.core.exceptions import BaseError
-from coagent.core.messages import Cancel, Message
+from coagent.core.messages import Message
 
 
 class Query(Message):
@@ -89,7 +89,7 @@ class TestTrivialAgent:
 
         async def cancel():
             await asyncio.sleep(0.01)
-            await local_channel.publish(addr, Cancel().encode())
+            await local_channel.cancel(addr)
 
         _ = asyncio.create_task(cancel())
         await yield_control()
@@ -130,7 +130,7 @@ class TestStreamAgent:
 
         async def cancel():
             await asyncio.sleep(0.01)
-            await local_channel.publish(addr, Cancel().encode())
+            await local_channel.cancel(addr)
 
         _ = asyncio.create_task(cancel())
         await yield_control()

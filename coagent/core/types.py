@@ -268,6 +268,11 @@ class Channel(abc.ABC):
     async def new_reply_topic(self) -> str:
         pass
 
+    @abc.abstractmethod
+    async def cancel(self, addr: Address) -> None:
+        """Cancel the agent with the given address."""
+        pass
+
 
 @dataclasses.dataclass
 class AgentSpec:

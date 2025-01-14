@@ -7,7 +7,6 @@ import jq
 
 from coagent.core import Address, RawMessage, set_stderr_logger
 from coagent.core.exceptions import BaseError
-from coagent.core.messages import Cancel
 from coagent.runtimes import NATSRuntime, HTTPRuntime
 
 
@@ -70,7 +69,7 @@ async def run(
                 async for chunk in runtime.channel.publish_multi(addr, msg):
                     print_msg(chunk, oneline, filter)
         except asyncio.CancelledError:
-            await runtime.channel.publish(addr, Cancel().encode(), probe=False)
+            await runtime.channel.cancel(addr)
         except BaseError as exc:
             print(f"Error: {exc}")
 

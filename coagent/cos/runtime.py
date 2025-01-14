@@ -14,7 +14,6 @@ from coagent.core import (
     RawMessage,
     logger,
 )
-from coagent.core.messages import Cancel
 from coagent.core.exceptions import BaseError
 from coagent.core.types import Runtime
 from coagent.core.util import clear_queue
@@ -149,7 +148,7 @@ class CosRuntime:
             # Disconnected from the client.
 
             # Cancel the ongoing operation.
-            await self._runtime.channel.publish(addr, Cancel().encode())
+            await self._runtime.channel.cancel(addr)
 
         if resp is None:
             return Response(status_code=204)
@@ -178,7 +177,7 @@ class CosRuntime:
                 # Disconnected from the client.
 
                 # Cancel the ongoing operation.
-                await self._runtime.channel.publish(addr, Cancel().encode())
+                await self._runtime.channel.cancel(addr)
 
         return EventSourceResponse(event_stream())
 

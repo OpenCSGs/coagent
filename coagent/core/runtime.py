@@ -5,7 +5,7 @@ import pydantic
 
 from .discovery import Discovery
 from .exceptions import BaseError
-from .messages import StopIteration, Error
+from .messages import Cancel, Error, StopIteration
 from .factory import Factory
 from .types import (
     AgentSpec,
@@ -100,6 +100,12 @@ class BaseChannel(Channel):
                     yield msg
         finally:
             await sub.unsubscribe()
+
+    async def cancel(self, addr: Address) -> None:
+        """Cancel the agent with the given address."""
+
+        # A shortcut for sending a Cancel message to the agent.
+        await self.publish(addr, Cancel().encode(), probe=False)
 
 
 class QueueSubscriptionIterator:
