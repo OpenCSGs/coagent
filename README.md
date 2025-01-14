@@ -53,6 +53,11 @@ pip install git+https://github.com/OpenCSGs/coagent.git
 
 ## Quick Start
 
+
+### Monolithic
+
+Implement the agent:
+
 ```python
 # translator.py
 
@@ -105,6 +110,71 @@ export MODEL_API_BASE=<YOUR_MODEL_API_BASE>
 export MODEL_API_VERSION=<YOUR_MODEL_API_VERSION>
 export MODEL_API_KEY=<YOUR_MODEL_API_KEY>
 python translator.py
+```
+
+
+### Distributed
+
+Start a NATS server ([docs][2]):
+
+```bash
+docker run -p 4222:4222 --name nats-server -ti nats:latest
+```
+
+Implement the agent:
+
+```python
+# translator.py
+
+import asyncio
+import os
+
+from coagent.agents import StreamChatAgent, ModelClient
+from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
+from coagent.runtimes import NATSRuntime
+
+client = ModelClient(
+    model=os.getenv("MODEL_NAME"),
+    api_base=os.getenv("MODEL_API_BASE"),
+    api_version=os.getenv("MODEL_API_VERSION"),
+    api_key=os.getenv("MODEL_API_KEY"),
+)
+
+translator = AgentSpec(
+    "translator",
+    new(
+        StreamChatAgent,
+        system="You are a professional translator that can translate Chinese to English.",
+        client=client,
+    ),
+)
+
+
+async def main():
+    async with NATSRuntime.from_servers("nats://localhost:4222") as runtime:
+        await runtime.register(translator)
+        await idle_loop()
+
+
+if __name__ == "__main__":
+    set_stderr_logger()
+    asyncio.run(main())
+```
+
+Run the agent as a daemon:
+
+```bash
+export MODEL_NAME=<YOUR_MODEL_NAME>
+export MODEL_API_BASE=<YOUR_MODEL_API_BASE>
+export MODEL_API_VERSION=<YOUR_MODEL_API_VERSION>
+export MODEL_API_KEY=<YOUR_MODEL_API_KEY>
+python translator.py
+```
+
+Communicate with the agent:
+
+```bash
+coagent translator -H type:ChatMessage --chat -d '{"role": "user", "content": "你好，世界"}'
 ```
 
 
@@ -364,3 +434,4 @@ triage = AgentSpec(
 
 
 [1]: https://docs.nats.io/nats-concepts/jetstream
+[2]: https://docs.nats.io/running-a-nats-service/nats_docker/nats-docker-tutorial
