@@ -3,10 +3,13 @@
 This example demonstrates how to implement a notification center to send and receive notifications.
 
 
+## Prerequisites
+
+- Install `coagent` (see [Installation](../../README.md#installation)).
+- Start a NATS server (see [Distributed](../../README.md#distributed)).
+
+
 ## Quick Start
-
-First, follow the instructions in [Prerequisites](../../README.md#prerequisites) and [Installation](../../README.md#installation).
-
 
 ### Using NATS Runtime
 

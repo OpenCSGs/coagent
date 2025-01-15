@@ -1,9 +1,13 @@
 # Agentic OpenCSG Demo
 
 
-## Quick Start
+## Prerequisites
 
-First, follow the instructions in [Prerequisites](../../README.md#prerequisites) and [Installation](../../README.md#installation).
+- Install `coagent` (see [Installation](../../README.md#installation)).
+- Start a NATS server (see [Distributed](../../README.md#distributed)).
+
+
+## Quick Start
 
 ### Run the Triage agent
 

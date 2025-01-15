@@ -5,10 +5,12 @@ This example demonstrates how to handle streaming messages. The server sends a s
 
 ## Quick Start
 
-First, follow the instructions in [Prerequisites](../../README.md#prerequisites) and [Installation](../../README.md#installation).
-
-
 ### Using NATS Runtime
+
+Prerequisites:
+
+- Install `coagent` (see [Installation](../../README.md#installation)).
+- Start a NATS server (see [Distributed](../../README.md#distributed)).
 
 Start a server in one terminal:
 
@@ -25,13 +27,15 @@ coagent stream_server -H type:Ping --chat
 
 ### Using HTTP Runtime
 
-Install the following packages:
+Prerequisites:
 
-```bash
-pip install hypercorn
-pip install starlette
-pip install sse-starlette
-```
+- Install the following packages:
+
+    ```bash
+    pip install hypercorn
+    pip install starlette
+    pip install sse-starlette
+    ```
 
 Start the HTTP runtime server:
 

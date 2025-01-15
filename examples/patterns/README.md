@@ -2,6 +2,7 @@ Coagent implementations of the Anthropic agent Patterns:
 
 - [Chaining](chaining.py)
 - [Parallelization](parallelization.py)
+- [Triaging](triaging.py)
 
 References: 
 - [Building effective agents][1]

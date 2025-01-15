@@ -1,11 +1,15 @@
 # StarShip App Builder
 
 
+## Prerequisites
+
+- Install `coagent` (see [Installation](../../README.md#installation)).
+- Start a NATS server (see [Distributed](../../README.md#distributed)).
+
+
 ## Quick Start
 
-First, follow the instructions in [Prerequisites](../../README.md#prerequisites) and [Installation](../../README.md#installation).
-
-Then start the dev agent:
+First, start the dev agent:
 
 ```bash
 export AZURE_MODEL=csg-gpt4
