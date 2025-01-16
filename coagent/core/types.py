@@ -288,20 +288,26 @@ class AgentSpec:
         """Register the agent specification to a runtime."""
         self.__runtime = runtime
 
-    async def run(self, msg: RawMessage, timeout: float = 0.5) -> RawMessage:
+    async def run(
+        self, msg: RawMessage, session_id: str = "", timeout: float = 0.5
+    ) -> RawMessage:
         """Create an agent and run it with the given message."""
         self.__assert_runtime()
 
-        addr = Address(name=self.name, id=uuid.uuid4().hex)
+        session_id = session_id or uuid.uuid4().hex
+        addr = Address(name=self.name, id=session_id)
         return await self.__runtime.channel.publish(
             addr, msg, request=True, timeout=timeout
         )
 
-    async def run_stream(self, msg: RawMessage) -> AsyncIterator[RawMessage]:
+    async def run_stream(
+        self, msg: RawMessage, session_id: str = ""
+    ) -> AsyncIterator[RawMessage]:
         """Create an agent and run it with the given message."""
         self.__assert_runtime()
 
-        addr = Address(name=self.name, id=uuid.uuid4().hex)
+        session_id = session_id or uuid.uuid4().hex
+        addr = Address(name=self.name, id=session_id)
         result = self.__runtime.channel.publish_multi(addr, msg)
         async for chunk in result:
             yield chunk
