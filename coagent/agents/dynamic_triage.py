@@ -48,7 +48,7 @@ class DynamicTriage(BaseAgent):
         self._inclusive: bool = inclusive
         self._client: ModelClient = client
 
-        self._swarm_client = Swarm(self.client.azure_client)
+        self._swarm_client = Swarm(self.client)
 
         self._sub_agents: dict[str, Schema] = {}
         self._swarm_agent: SwarmAgent | None = None

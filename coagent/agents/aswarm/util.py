@@ -21,6 +21,10 @@ def debug_print(debug: bool, *args: str) -> None:
 def merge_fields(target, source):
     for key, value in source.items():
         if isinstance(value, str):
+            # A dirty workaround to avoid containing duplicate "function" in
+            # the `type` field. (e.g. "functionfunction")
+            if key == "type" and target[key] == "function":
+                continue
             target[key] += value
         elif value is not None and isinstance(value, dict):
             merge_fields(target[key], value)

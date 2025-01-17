@@ -18,7 +18,7 @@ authors = [
 [tool.poetry.dependencies]
 python = ">=3.10.0,<3.14"
 pydantic = ">=2.7.0"
-openai = "1.52.1"
+openai = ">=1.52.1"
 nats-py = "2.9.0"
 textual = "0.85.1"
 requests = "2.32.3"
@@ -29,6 +29,7 @@ httpx-sse = "0.4.0"
 blinker = "1.9.0"
 loguru = "0.7.3"
 jq = "1.8.0"
+litellm = "1.55.12"
 
 [tool.pyright]
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md

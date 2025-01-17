@@ -11,8 +11,7 @@ from .model_client import default_model_client, ModelClient
 async def chat(
     messages: list[ChatMessage], client: ModelClient = default_model_client
 ) -> ChatMessage:
-    response = await client.azure_client.chat.completions.create(
-        model=default_model_client.model,
+    response = await client.acompletion(
         messages=[m.model_dump() for m in messages],
     )
     msg = response.choices[0].message
@@ -25,8 +24,7 @@ async def chat(
 async def chat_stream(
     messages: list[ChatMessage], client: ModelClient = default_model_client
 ) -> AsyncIterator[ChatMessage]:
-    response = await default_model_client.azure_client.chat.completions.create(
-        model=client.model,
+    response = await client.acompletion(
         messages=[m.model_dump() for m in messages],
         stream=True,
     )

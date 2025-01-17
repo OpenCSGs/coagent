@@ -206,7 +206,7 @@ class StreamChatAgent(BaseAgent):
             if getattr(meth, "is_tool", False):
                 tools.append(meth)
 
-        self._swarm_client = Swarm(self.client.azure_client)
+        self._swarm_client = Swarm(self.client)
 
         self._swarm_agent = SwarmAgent(
             name=self.name,

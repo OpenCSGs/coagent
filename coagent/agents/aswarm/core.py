@@ -5,10 +5,10 @@ from collections import defaultdict
 from typing import Any, AsyncIterator, List, Callable, Union
 
 # Package/library imports
-from openai import OpenAI
 from openai.types.chat import ChatCompletionChunk
 from openai.types.chat.chat_completion_chunk import Choice, ChoiceDelta
 from coagent.agents.messages import ChatMessage
+from coagent.agents.model_client import ModelClient
 from coagent.core.agent import is_async_iterator
 from coagent.core.util import get_func_args, pretty_trace_tool_call
 
@@ -33,10 +33,8 @@ from .types import (
 
 
 class Swarm:
-    def __init__(self, client=None):
-        if not client:
-            client = OpenAI()
-        self.client = client
+    def __init__(self, client: ModelClient):
+        self.client: ModelClient = client
 
     async def get_chat_completion(
         self,
@@ -86,7 +84,7 @@ class Swarm:
             p.pop("refusal", None)
 
         try:
-            response = await self.client.chat.completions.create(**create_params)
+            response = await self.client.acompletion(**create_params)
             async for chunk in response:
                 yield chunk
         except Exception as exc:
