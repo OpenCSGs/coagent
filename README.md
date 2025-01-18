@@ -9,6 +9,11 @@ An open-source framework for building monolithic or distributed agentic systems,
 </p>
 
 
+## Latest Updates
+
+- 🚀 **2025-01-17**: Added integration with [LiteLLM](https://github.com/BerriAI/litellm).
+
+
 ## Features
 
 - [x] Event-driven
