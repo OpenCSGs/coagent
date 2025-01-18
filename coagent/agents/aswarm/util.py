@@ -131,6 +131,14 @@ def function_to_jsonschema(func) -> dict:
     Then you will get a JSON schema with per-parameter descriptions.
     """
 
+    if hasattr(func, "__mcp_tool_schema__"):
+        # If the function already has a schema, return it.
+        # This is the case for tools used in MCPAgent.
+        return dict(
+            type="function",
+            function=func.__mcp_tool_schema__
+        )
+
     # Construct the pydantic mdoel for the _under_fn's function signature parameters.
     # 1. Get the function signature.
 

@@ -43,6 +43,9 @@ class Trie(pygtrie.StringTrie):
 
 
 def get_func_args(func) -> set[str]:
+    if hasattr(func, "__mcp_tool_args__"):
+        return set(func.__mcp_tool_args__)
+
     hints = get_type_hints(func)
     hints.pop("return", None)  # Ignore the return type.
     return set(hints.keys())

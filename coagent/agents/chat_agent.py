@@ -234,6 +234,9 @@ class StreamChatAgent(BaseAgent):
     def client(self) -> ModelClient:
         return self._client
 
+    async def get_swarm_agent(self) -> SwarmAgent:
+        return self._swarm_agent
+
     async def agent(self, agent_type: str) -> AsyncIterator[ChatMessage]:
         """The candidate agent to delegate the conversation to."""
         async for chunk in StreamDelegate(self, agent_type).handle(self._history):
@@ -265,8 +268,10 @@ class StreamChatAgent(BaseAgent):
         await self.update_user_confirmed(msg)
         await self.update_user_submitted(msg)
 
+        swarm_agent = await self.get_swarm_agent()
+
         response = self._swarm_client.run_and_stream(
-            agent=self._swarm_agent,
+            agent=swarm_agent,
             messages=[m.model_dump() for m in msg.messages],
             context_variables=msg.extensions,
         )
