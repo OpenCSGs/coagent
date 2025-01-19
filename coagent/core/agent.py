@@ -1,6 +1,7 @@
 import asyncio
+import inspect
 import time
-from typing import Any, AsyncIterator, Callable, Type, get_type_hints, cast
+from typing import Any, AsyncIterator, Awaitable, Callable, Type, get_type_hints, cast
 
 from pydantic import BaseModel, ValidationError
 
@@ -282,12 +283,12 @@ class BaseAgent(Agent):
         """Handle user-defined DATA messages."""
         h: Handler = self.__get_handler(msg)
         result = h(self, msg, ctx)
-        if not is_async_iterator(result):
-            result = await result or Empty()
         await self.__send_reply(msg.reply, result)
 
     async def __send_reply(
-        self, in_msg_reply: Reply, result: Message | AsyncIterator[Message]
+        self,
+        in_msg_reply: Reply,
+        result: Message | Awaitable[Message] | AsyncIterator[Message],
     ) -> bool:
         reply = self.reply or in_msg_reply
         if not reply:
@@ -300,7 +301,7 @@ class BaseAgent(Agent):
     async def send_reply(
         self,
         to: Reply,
-        result: Message | AsyncIterator[Message],
+        result: Message | Awaitable[Message] | AsyncIterator[Message],
     ) -> None:
         async def pub(msg: Message):
             await self.channel.publish(to.address, msg.encode())
@@ -314,9 +315,11 @@ class BaseAgent(Agent):
                 if is_async_iterator(result):
                     async for msg in result:
                         await pub(msg)
-                else:
-                    msg = result
+                elif inspect.isawaitable(result):
+                    msg = await result or Empty()
                     await pub(msg)
+                else:
+                    await pub(result)
             except asyncio.CancelledError as exc:
                 await pub_exc(exc)
                 raise
@@ -338,9 +341,11 @@ class BaseAgent(Agent):
                             except TypeError:
                                 await pub_exc(StreamError("Streaming mode is required"))
                     await pub(accumulated)
-                else:
-                    msg = result
+                elif inspect.isawaitable(result):
+                    msg = await result or Empty()
                     await pub(msg)
+                else:
+                    await pub(result)
             except asyncio.CancelledError as exc:
                 await pub_exc(exc)
                 raise
