@@ -87,6 +87,7 @@ class BaseChannel(Channel):
             addr,
             msg,
             request=True,
+            stream=True,
             reply=inbox,
             probe=probe,
         )

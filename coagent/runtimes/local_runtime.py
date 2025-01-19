@@ -13,6 +13,7 @@ from coagent.core import (
     BaseChannel,
     QueueSubscriptionIterator,
     RawMessage,
+    Reply,
     StopIteration,
     Subscription,
 )
@@ -48,6 +49,7 @@ class LocalChannel(BaseChannel):
         addr: Address,
         msg: RawMessage,
         request: bool = False,
+        stream: bool = False,
         reply: str = "",
         timeout: float = 0.5,
         probe: bool = True,
@@ -56,6 +58,7 @@ class LocalChannel(BaseChannel):
             addr,
             msg,
             request=request,
+            stream=stream,
             reply=reply,
             timeout=timeout,
             probe=probe,
@@ -87,17 +90,18 @@ class LocalChannel(BaseChannel):
         addr: Address,
         msg: RawMessage,
         request: bool = False,
+        stream: bool = False,
         reply: str = "",
         timeout: float = 0.5,
         probe: bool = True,
     ) -> RawMessage | None:
         if addr.is_reply or not probe or self._probe(addr):
             return await self._blinker_send(
-                addr, msg, request=request, reply=reply, timeout=timeout
+                addr, msg, request=request, stream=stream, reply=reply, timeout=timeout
             )
 
         return await self._create_and_publish(
-            addr, msg, request=request, reply=reply, timeout=timeout
+            addr, msg, request=request, stream=stream, reply=reply, timeout=timeout
         )
 
     async def _create_and_publish(
@@ -105,6 +109,7 @@ class LocalChannel(BaseChannel):
         addr: Address,
         msg: RawMessage,
         request: bool = False,
+        stream: bool = False,
         reply: str = "",
         timeout: float = 0.5,
     ) -> RawMessage | None:
@@ -121,7 +126,7 @@ class LocalChannel(BaseChannel):
 
         # Then send the original message to the agent.
         return await self._blinker_send(
-            addr, msg, request=request, reply=reply, timeout=timeout
+            addr, msg, request=request, stream=stream, reply=reply, timeout=timeout
         )
 
     def _probe(self, addr: Address) -> bool:
@@ -138,6 +143,7 @@ class LocalChannel(BaseChannel):
         addr: Address,
         msg: RawMessage,
         request: bool = False,
+        stream: bool = False,
         reply: str = "",
         timeout: float = 0.5,
     ) -> RawMessage | None:
@@ -157,7 +163,7 @@ class LocalChannel(BaseChannel):
         elif reply:
             # In request-reply mode and a reply topic is given.
             # Publish the message and the response(s) will be sent to the reply topic.
-            msg.reply = Address(name=reply)
+            msg.reply = Reply(address=Address(name=reply), stream=stream)
             await sig.send_async(None, raw=msg)
             return None
         else:
@@ -167,7 +173,7 @@ class LocalChannel(BaseChannel):
             addr = Address(name=tmp_reply)
             sub = await self._subscribe(addr)
 
-            msg.reply = addr
+            msg.reply = Reply(address=addr, stream=stream)
             await sig.send_async(None, raw=msg)
 
             result: RawMessage | None = None

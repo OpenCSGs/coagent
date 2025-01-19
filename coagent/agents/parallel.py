@@ -7,13 +7,14 @@ from coagent.core import (
     GenericMessage,
     Message,
     RawMessage,
+    Reply,
     SetReplyAgent,
 )
 
 
 class StartAggregation(Message):
     candidates: list[str]
-    reply_addr: Address
+    reply_info: Reply | None
 
 
 class AggregationStatus(Message):
@@ -62,17 +63,17 @@ class Aggregator(BaseAgent):
         self._results.append(msg.encode())
 
         if len(self._results) == len(self._data.candidates):
-            if self._data.reply_addr:
+            if self._data.reply_info:
                 result = await self._aggregate(self._results)
-                await self.channel.publish(self._data.reply_addr, result)
+                await self.send_reply(self._data.reply_info, result)
             self._busy = False
 
-    async def aggregate(self, results: list[RawMessage]) -> RawMessage:
+    async def aggregate(self, results: list[RawMessage]) -> Message:
         """Aggregate the results to a single one.
 
         Override this method to provide custom aggregation logic.
         """
-        return AggregationResult(results=results).encode()
+        return AggregationResult(results=results)
 
 
 class Parallel(BaseAgent):
@@ -87,12 +88,13 @@ class Parallel(BaseAgent):
 
     async def started(self) -> None:
         aggregator_addr = Address(name=self._aggregator_type, id=self.address.id)
+        aggregator_reply = Reply(address=aggregator_addr)
         # Make each agent reply to the aggregator agent.
         for agent_type in self._agent_types:
             addr = Address(name=agent_type, id=self.address.id)
             await self.channel.publish(
                 addr,
-                SetReplyAgent(address=aggregator_addr).encode(),
+                SetReplyAgent(reply_info=aggregator_reply).encode(),
             )
 
     @handler
@@ -101,16 +103,14 @@ class Parallel(BaseAgent):
             return
 
         # Let the aggregator agent reply to the sending agent, if asked.
-        reply_address = self.reply_address or msg.reply
-        if reply_address:
+        reply = self.reply or msg.reply
+        if reply:
             # Reset the reply address of the message, since it will be replied by the aggregator agent.
             msg.reply = None
 
         result = await self.channel.publish(
             Address(name=self._aggregator_type, id=self.address.id),
-            StartAggregation(
-                candidates=self._agent_types, reply_addr=reply_address
-            ).encode(),
+            StartAggregation(candidates=self._agent_types, reply_info=reply).encode(),
             request=True,
         )
         status = AggregationStatus.decode(result)

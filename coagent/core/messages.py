@@ -3,16 +3,25 @@ from __future__ import annotations
 import json
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from .types import Address, MessageHeader, RawMessage
+from .types import MessageHeader, RawMessage, Reply
 
 
 class Message(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    reply: Address | None = Field(default=None, description="Reply address.")
+    reply: Reply | None = Field(default=None, description="Reply information.")
     extensions: dict = Field(
         default_factory=dict, description="Extension fields from RawMessage header."
     )
+
+    def __add__(self, other: Message) -> Message:
+        """Concatenate two messages.
+
+        This binary operator is mainly used to aggregate multiple streaming
+        messages into one message when the sender requests to receive a
+        non-streaming result.
+        """
+        return NotImplemented
 
     def encode(
         self, content_type: str = "application/json", exclude_defaults: bool = True
@@ -114,9 +123,12 @@ class ProbeAgent(Message):
 
 
 class SetReplyAgent(Message):
-    """A message to set the agent to reply to."""
+    """A message to set the reply information of an agent.
 
-    address: Address
+    This is mainly useful when orchestrating multiple agents to work together.
+    """
+
+    reply_info: Reply
 
 
 class Empty(Message):

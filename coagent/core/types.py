@@ -88,6 +88,13 @@ class Address(BaseModel):
         return cls.model_validate(data)
 
 
+class Reply(BaseModel):
+    address: Address = Field(..., description="Reply address.")
+    stream: bool = Field(
+        False, description="Whether the sender requests a streaming result."
+    )
+
+
 class MessageHeader(BaseModel):
     type: str = Field(..., description="Message type name.")
     content_type: str = Field(
@@ -98,7 +105,7 @@ class MessageHeader(BaseModel):
 
 class RawMessage(BaseModel):
     header: MessageHeader = Field(..., description="Message header.")
-    reply: Address | None = Field(default=None, description="Reply address.")
+    reply: Reply | None = Field(default=None, description="Reply information.")
     content: bytes = Field(default=b"", description="Message content.")
 
     def encode(self, mode: str = "python", exclude_defaults: bool = True) -> dict:
@@ -223,6 +230,7 @@ class Channel(abc.ABC):
         addr: Address,
         msg: RawMessage,
         request: bool = False,
+        stream: bool = False,
         reply: str = "",
         timeout: float = 0.5,
         probe: bool = True,
@@ -233,6 +241,7 @@ class Channel(abc.ABC):
             addr (Address): The address of the agent.
             msg (RawMessage): The raw message to send.
             request (bool, optional): Whether this is a request. Defaults to False.
+            stream (bool, optional): Whether to request a streaming result. Defaults to False.
             reply (str, optional): If `request` is True, then this will be the subject to reply to. Defaults to "".
             timeout (float, optional): If `request` is True, then this will be the timeout for the response. Defaults to 0.5.
             probe (bool, optional): Whether to probe the agent before sending the message. Defaults to True.

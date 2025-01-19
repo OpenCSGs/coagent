@@ -16,6 +16,7 @@ from coagent.core import (
     BaseChannel,
     MessageHeader,
     RawMessage,
+    Reply,
     Subscription,
 )
 from coagent.core.exceptions import (
@@ -61,6 +62,7 @@ class NATSChannel(BaseChannel):
         addr: Address,
         msg: RawMessage,
         request: bool = False,
+        stream: bool = False,
         reply: str = "",
         timeout: float = 0.5,
         probe: bool = True,
@@ -69,6 +71,7 @@ class NATSChannel(BaseChannel):
             addr,
             msg,
             request=request,
+            stream=stream,
             reply=reply,
             timeout=timeout,
             probe=probe,
@@ -95,6 +98,7 @@ class NATSChannel(BaseChannel):
         addr: Address,
         msg: RawMessage,
         request: bool = False,
+        stream: bool = False,
         reply: str = "",
         timeout: float = 0.5,
         probe: bool = True,
@@ -102,7 +106,7 @@ class NATSChannel(BaseChannel):
     ) -> RawMessage | None:
         if addr.is_reply or not probe or await self._probe(addr):
             return await self._nats_publish(
-                addr, msg, request=request, reply=reply, timeout=timeout
+                addr, msg, request=request, stream=stream, reply=reply, timeout=timeout
             )
 
         if request or not nonblocking:
@@ -111,6 +115,7 @@ class NATSChannel(BaseChannel):
                 addr,
                 msg,
                 request=request,
+                stream=stream,
                 reply=reply,
                 timeout=timeout,
             )
@@ -118,7 +123,7 @@ class NATSChannel(BaseChannel):
         # Run in a separate task to avoid blocking the agent handler.
         _ = asyncio.create_task(
             self._create_and_publish(
-                addr, msg, request=request, reply=reply, timeout=timeout
+                addr, msg, request=request, stream=stream, reply=reply, timeout=timeout
             )
         )
 
@@ -127,6 +132,7 @@ class NATSChannel(BaseChannel):
         addr: Address,
         msg: RawMessage,
         request: bool = False,
+        stream: bool = False,
         reply: str = "",
         timeout: float = 0.5,
     ) -> RawMessage | None:
@@ -148,7 +154,7 @@ class NATSChannel(BaseChannel):
 
         # Then send the original message to the agent.
         return await self._nats_publish(
-            addr, msg, request=request, reply=reply, timeout=timeout
+            addr, msg, request=request, stream=stream, reply=reply, timeout=timeout
         )
 
     async def _probe(self, addr: Address) -> bool:
@@ -177,6 +183,7 @@ class NATSChannel(BaseChannel):
         addr: Address,
         msg: RawMessage,
         request: bool = False,
+        stream: bool = False,
         reply: str = "",
         timeout: float = 0.5,
     ) -> RawMessage | None:
@@ -185,6 +192,7 @@ class NATSChannel(BaseChannel):
             "Coagent-Type": msg.header.type,
             "Coagent-Content-Type": msg.header.content_type,
             "Coagent-Extensions": json.dumps(msg.header.extensions),
+            "Coagent-Stream": "true" if stream else "false",
         }
         payload = msg.content
 
@@ -237,5 +245,6 @@ def nats_msg_to_raw(msg: Msg) -> RawMessage:
         content=msg.data,
     )
     if msg.reply:
-        raw.reply = Address(name=msg.reply)
+        stream = msg.header.get("Coagent-Stream") == "true"
+        raw.reply = Reply(address=Address(name=msg.reply), stream=stream)
     return raw

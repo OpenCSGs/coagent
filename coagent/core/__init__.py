@@ -17,6 +17,7 @@ from .types import (
     MessageHeader,
     new,
     RawMessage,
+    Reply,
     Subscription,
 )
 from .util import idle_loop

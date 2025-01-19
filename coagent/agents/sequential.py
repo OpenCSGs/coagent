@@ -3,6 +3,7 @@ from coagent.core import (
     BaseAgent,
     Context,
     GenericMessage,
+    Reply,
     SetReplyAgent,
     handler,
 )
@@ -20,9 +21,10 @@ class Sequential(BaseAgent):
             # Set the reply address of the current agent to be the next agent.
             addr = Address(name=self._agent_types[i], id=self.address.id)
             next_addr = Address(name=self._agent_types[i + 1], id=self.address.id)
+            reply = Reply(address=next_addr)
             await self.channel.publish(
                 addr,
-                SetReplyAgent(address=next_addr).encode(),
+                SetReplyAgent(reply_info=reply).encode(),
             )
 
     @handler
@@ -31,12 +33,12 @@ class Sequential(BaseAgent):
             return
 
         # Let the last agent reply to the sending agent, if asked.
-        reply_address = self.reply_address or msg.reply
-        if reply_address:
+        reply = self.reply or msg.reply
+        if reply:
             last_addr = Address(name=self._agent_types[-1], id=self.address.id)
             await self.channel.publish(
                 last_addr,
-                SetReplyAgent(address=reply_address).encode(),
+                SetReplyAgent(reply_info=reply).encode(),
             )
             # Reset the reply address of the message, since it will be replied by the last agent.
             msg.reply = None

@@ -32,6 +32,7 @@ async def publish(request):
             addr=Address.model_validate(data["addr"]),
             msg=RawMessage.model_validate(data["msg"]),
             request=data.get("request", False),
+            stream=data.get("stream", False),
             reply=data.get("reply", ""),
             timeout=data.get("timeout", 0.5),
             probe=data.get("probe", True),

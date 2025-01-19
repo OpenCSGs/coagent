@@ -99,3 +99,7 @@ class InternalError(BaseError):
 
 class DeadlineExceededError(BaseError):
     """Raised when a context deadline is exceeded."""
+
+
+class StreamError(BaseError):
+    """Raised when the sender requests a non-streaming result but the receiver sends a stream."""

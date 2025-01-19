@@ -4,7 +4,7 @@ from typing import Any, AsyncIterator, Callable, Type, get_type_hints, cast
 
 from pydantic import BaseModel, ValidationError
 
-from .exceptions import MessageDecodeError, InternalError
+from .exceptions import MessageDecodeError, InternalError, StreamError
 from .logger import logger
 from .messages import (
     Cancel,
@@ -17,7 +17,7 @@ from .messages import (
     SetReplyAgent,
     StopIteration,
 )
-from .types import Address, Agent, Channel, RawMessage, State, Subscription
+from .types import Address, Agent, Channel, RawMessage, Reply, State, Subscription
 
 
 class Context:
@@ -122,8 +122,8 @@ class BaseAgent(Agent):
         # this would result in a lot of messages.
         self._lock: asyncio.Lock = asyncio.Lock()
 
-        # Normally reply_address is set by an orchestration agent by sending a `SetReplyAgent` message.
-        self.reply_address: Address | None = None
+        # Normally `reply` is set by an orchestration agent by sending a `SetReplyAgent` message.
+        self.reply: Reply | None = None
 
         handlers, message_types = self.__collect_handlers()
         # A list of handlers that are registered to handle messages.
@@ -269,7 +269,7 @@ class BaseAgent(Agent):
                     await self.stopped()
 
                 case SetReplyAgent():
-                    self.reply_address = msg.address
+                    self.reply = msg.reply_info
 
                 case ProbeAgent() | Empty():
                     # Do not handle probes and empty messages.
@@ -282,18 +282,41 @@ class BaseAgent(Agent):
         """Handle user-defined DATA messages."""
         h: Handler = self.__get_handler(msg)
         result = h(self, msg, ctx)
+        if not is_async_iterator(result):
+            result = await result or Empty()
+        await self.__send_reply(msg.reply, result)
 
-        async def pub(x: Message):
-            await self.__send_reply(msg.reply, x)
+    async def __send_reply(
+        self, in_msg_reply: Reply, result: Message | AsyncIterator[Message]
+    ) -> bool:
+        reply = self.reply or in_msg_reply
+        if not reply:
+            return False
+
+        # Reply to the sender if asked.
+        await self.send_reply(reply, result)
+        return True
+
+    async def send_reply(
+        self,
+        to: Reply,
+        result: Message | AsyncIterator[Message],
+    ) -> None:
+        async def pub(msg: Message):
+            await self.channel.publish(to.address, msg.encode())
 
         async def pub_exc(exc: BaseException):
             err = InternalError.from_exception(exc)
             await pub(err.encode_message())
 
-        if is_async_iterator(result):
+        if to.stream:
             try:
-                async for x in result:
-                    await pub(x)
+                if is_async_iterator(result):
+                    async for msg in result:
+                        await pub(msg)
+                else:
+                    msg = result
+                    await pub(msg)
             except asyncio.CancelledError as exc:
                 await pub_exc(exc)
                 raise
@@ -304,22 +327,25 @@ class BaseAgent(Agent):
                 await pub(StopIteration())
         else:
             try:
-                x = await result or Empty()
-                await pub(x)
+                if is_async_iterator(result):
+                    accumulated: RawMessage | None = None
+                    async for msg in result:
+                        if not accumulated:
+                            accumulated = msg
+                        else:
+                            try:
+                                accumulated += msg
+                            except TypeError:
+                                await pub_exc(StreamError("Streaming mode is required"))
+                    await pub(accumulated)
+                else:
+                    msg = result
+                    await pub(msg)
             except asyncio.CancelledError as exc:
                 await pub_exc(exc)
                 raise
             except Exception as exc:
                 await pub_exc(exc)
-
-    async def __send_reply(self, in_msg_reply: Address, out_msg: Message) -> bool:
-        reply_address = self.reply_address or in_msg_reply
-        if not reply_address:
-            return False
-
-        # Reply to the sending agent if asked.
-        await self.channel.publish(reply_address, out_msg.encode())
-        return True
 
     def __get_handler(self, msg: Message) -> Handler | None:
         msg_type: Type[Any] = type(msg)
