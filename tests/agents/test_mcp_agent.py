@@ -1,9 +1,12 @@
+import sys
+
 import pytest
 
 from coagent.agents.mcp_agent import MCPAgent
 
 
 class TestMCPAgent:
+    @pytest.mark.skipif(sys.platform == "win32", reason="Does not run on Windows.")
     @pytest.mark.asyncio
     async def test_get_tools(self):
         agent = MCPAgent(mcp_server_base_url="python tests/agents/mcp_server.py")
