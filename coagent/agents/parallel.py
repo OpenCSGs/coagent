@@ -6,6 +6,7 @@ from coagent.core import (
     handler,
     GenericMessage,
     Message,
+    NO_REPLY,
     RawMessage,
     Reply,
     SetReplyAgent,
@@ -97,17 +98,16 @@ class Parallel(BaseAgent):
                 SetReplyAgent(reply_info=aggregator_reply).encode(),
             )
 
+        # Set the current agent to no-reply mode.
+        await self._set_reply_info(NO_REPLY)
+
     @handler
     async def handle(self, msg: GenericMessage, ctx: Context) -> None:
         if len(self._agent_types) == 0:
-            return
+            raise RuntimeError("No agent types provided.")
 
         # Let the aggregator agent reply to the sending agent, if asked.
-        reply = self.reply or msg.reply
-        if reply:
-            # Reset the reply address of the message, since it will be replied by the aggregator agent.
-            msg.reply = None
-
+        reply = msg.reply
         result = await self.channel.publish(
             Address(name=self._aggregator_type, id=self.address.id),
             StartAggregation(candidates=self._agent_types, reply_info=reply).encode(),
@@ -115,7 +115,8 @@ class Parallel(BaseAgent):
         )
         status = AggregationStatus.decode(result)
         if status.busy:
-            return  # The aggregator agent is busy.
+            # The aggregator agent is busy.
+            raise RuntimeError("Parallel agent is busy.")
 
         for agent_type in self._agent_types:
             addr = Address(name=agent_type, id=self.address.id)

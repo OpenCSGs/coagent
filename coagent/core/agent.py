@@ -18,7 +18,16 @@ from .messages import (
     SetReplyAgent,
     StopIteration,
 )
-from .types import Address, Agent, Channel, RawMessage, Reply, State, Subscription
+from .types import (
+    Address,
+    Agent,
+    Channel,
+    NO_REPLY,
+    RawMessage,
+    Reply,
+    State,
+    Subscription,
+)
 
 
 class Context:
@@ -121,10 +130,11 @@ class BaseAgent(Agent):
         # Note that it's possible to avoid using locks if the factory agent
         # gets the state of this agent through sending query messages, but
         # this would result in a lot of messages.
-        self._lock: asyncio.Lock = asyncio.Lock()
+        self._last_msg_received_at_lock: asyncio.Lock = asyncio.Lock()
 
         # Normally `reply` is set by an orchestration agent by sending a `SetReplyAgent` message.
         self.reply: Reply | None = None
+        self._reply_lock: asyncio.Lock = asyncio.Lock()
 
         handlers, message_types = self.__collect_handlers()
         # A list of handlers that are registered to handle messages.
@@ -155,7 +165,7 @@ class BaseAgent(Agent):
         self.factory_address = factory_address
 
     async def get_state(self) -> State:
-        async with self._lock:
+        async with self._last_msg_received_at_lock:
             elapsed = time.time() - self._last_msg_received_at
 
         if elapsed >= self._timeout:
@@ -211,7 +221,7 @@ class BaseAgent(Agent):
         name: str = f"{self.__class__.__name__} {self.id}"
         logger.debug(f"[{name}] Received a message: {raw.model_dump()}")
 
-        async with self._lock:
+        async with self._last_msg_received_at_lock:
             self._last_msg_received_at = time.time()
 
         msg_type_name = raw.header.type
@@ -270,7 +280,7 @@ class BaseAgent(Agent):
                     await self.stopped()
 
                 case SetReplyAgent():
-                    self.reply = msg.reply_info
+                    await self._set_reply_info(msg.reply_info)
 
                 case ProbeAgent() | Empty():
                     # Do not handle probes and empty messages.
@@ -285,18 +295,23 @@ class BaseAgent(Agent):
         result = h(self, msg, ctx)
         await self.__send_reply(msg.reply, result)
 
+    async def _get_reply_info(self) -> Reply | None:
+        async with self._reply_lock:
+            return self.reply
+
+    async def _set_reply_info(self, reply_info: Reply) -> None:
+        async with self._reply_lock:
+            self.reply = reply_info
+
     async def __send_reply(
         self,
         in_msg_reply: Reply,
         result: Message | Awaitable[Message] | AsyncIterator[Message],
     ) -> bool:
-        reply = self.reply or in_msg_reply
-        if not reply:
-            return False
-
-        # Reply to the sender if asked.
+        reply = await self._get_reply_info() or in_msg_reply
         await self.send_reply(reply, result)
-        return True
+        sent = reply and reply is not NO_REPLY
+        return sent
 
     async def send_reply(
         self,
@@ -304,13 +319,14 @@ class BaseAgent(Agent):
         result: Message | Awaitable[Message] | AsyncIterator[Message],
     ) -> None:
         async def pub(msg: Message):
-            await self.channel.publish(to.address, msg.encode())
+            if to and to is not NO_REPLY:
+                await self.channel.publish(to.address, msg.encode())
 
         async def pub_exc(exc: BaseException):
             err = InternalError.from_exception(exc)
             await pub(err.encode_message())
 
-        if to.stream:
+        if to and to.stream:  # Streaming mode
             try:
                 if is_async_iterator(result):
                     async for msg in result:
@@ -328,7 +344,7 @@ class BaseAgent(Agent):
             finally:
                 # End of the iteration, send an extra StopIteration message.
                 await pub(StopIteration())
-        else:
+        else:  # None, NO_REPLY, or non-streaming
             try:
                 if is_async_iterator(result):
                     accumulated: RawMessage | None = None

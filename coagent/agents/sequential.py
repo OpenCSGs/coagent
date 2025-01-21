@@ -3,6 +3,7 @@ from coagent.core import (
     BaseAgent,
     Context,
     GenericMessage,
+    NO_REPLY,
     Reply,
     SetReplyAgent,
     handler,
@@ -27,21 +28,22 @@ class Sequential(BaseAgent):
                 SetReplyAgent(reply_info=reply).encode(),
             )
 
+        # Set the current agent to no-reply mode.
+        await self._set_reply_info(NO_REPLY)
+
     @handler
     async def handle(self, msg: GenericMessage, ctx: Context) -> None:
         if len(self._agent_types) == 0:
-            return
+            raise RuntimeError("No agent types provided.")
 
         # Let the last agent reply to the sending agent, if asked.
-        reply = self.reply or msg.reply
+        reply = msg.reply
         if reply:
             last_addr = Address(name=self._agent_types[-1], id=self.address.id)
             await self.channel.publish(
                 last_addr,
                 SetReplyAgent(reply_info=reply).encode(),
             )
-            # Reset the reply address of the message, since it will be replied by the last agent.
-            msg.reply = None
 
         # Send the message to the first agent in the list.
         addr = Address(name=self._agent_types[0], id=self.address.id)

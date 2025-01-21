@@ -16,6 +16,7 @@ from .types import (
     Channel,
     MessageHeader,
     new,
+    NO_REPLY,
     RawMessage,
     Reply,
     Subscription,

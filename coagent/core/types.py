@@ -95,6 +95,13 @@ class Reply(BaseModel):
     )
 
 
+# A sentinel reply object that indicates no reply will be sent.
+#
+# This is mainly used by the orchestration agents who delegate the reply
+# handling to other agents.
+NO_REPLY = Reply(address=Address(name="", id=""), stream=False)
+
+
 class MessageHeader(BaseModel):
     type: str = Field(..., description="Message type name.")
     content_type: str = Field(
