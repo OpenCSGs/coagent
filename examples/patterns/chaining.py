@@ -83,7 +83,7 @@ async def main():
         for spec in [extractor, converter, sorter, formatter, chain]:
             await runtime.register(spec)
 
-        result = chain.run_stream(
+        result = await chain.run(
             ChatMessage(
                 role="user",
                 content="""\
@@ -97,7 +97,8 @@ Product adoption rate increased to 78%.
 Employee satisfaction is at 87 points.
 Operating margin improved to 34%.\
 """,
-            ).encode()
+            ).encode(),
+            stream=True,
         )
         async for chunk in result:
             msg = ChatMessage.decode(chunk)

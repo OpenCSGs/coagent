@@ -305,32 +305,25 @@ class AgentSpec:
         self.__runtime = runtime
 
     async def run(
-        self, msg: RawMessage, session_id: str = "", timeout: float = 0.5
-    ) -> RawMessage:
+        self,
+        msg: RawMessage,
+        stream: bool = False,
+        session_id: str = "",
+        timeout: float = 0.5,
+    ) -> RawMessage | AsyncIterator[RawMessage]:
         """Create an agent and run it with the given message."""
-        self.__assert_runtime()
-
-        session_id = session_id or uuid.uuid4().hex
-        addr = Address(name=self.name, id=session_id)
-        return await self.__runtime.channel.publish(
-            addr, msg, request=True, timeout=timeout
-        )
-
-    async def run_stream(
-        self, msg: RawMessage, session_id: str = ""
-    ) -> AsyncIterator[RawMessage]:
-        """Create an agent and run it with the given message."""
-        self.__assert_runtime()
-
-        session_id = session_id or uuid.uuid4().hex
-        addr = Address(name=self.name, id=session_id)
-        result = self.__runtime.channel.publish_multi(addr, msg)
-        async for chunk in result:
-            yield chunk
-
-    def __assert_runtime(self) -> None:
         if self.__runtime is None:
             raise ValueError(f"AgentSpec {self.name} is not registered to a runtime.")
+
+        session_id = session_id or uuid.uuid4().hex
+        addr = Address(name=self.name, id=session_id)
+
+        if stream:
+            return self.__runtime.channel.publish_multi(addr, msg)
+        else:
+            return await self.__runtime.channel.publish(
+                addr, msg, request=True, timeout=timeout
+            )
 
 
 class Runtime(abc.ABC):

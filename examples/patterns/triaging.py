@@ -64,7 +64,7 @@ async def main():
         for spec in [billing, account, triage]:
             await runtime.register(spec)
 
-        result = triage.run_stream(
+        result = await triage.run(
             ChatMessage(
                 role="user",
                 content="""\
@@ -74,7 +74,8 @@ I'm sure I'm using the right password. Can you help me regain access? This is ur
 submit a report by end of day.
 - John\
 """,
-            ).encode()
+            ).encode(),
+            stream=True,
         )
         async for chunk in result:
             msg = ChatMessage.decode(chunk)

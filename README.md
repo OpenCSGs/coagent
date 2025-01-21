@@ -87,8 +87,9 @@ async def main():
     async with LocalRuntime() as runtime:
         await runtime.register(translator)
 
-        result = translator.run_stream(
-            ChatMessage(role="user", content="你好，世界").encode()
+        result = await translator.run(
+            ChatMessage(role="user", content="你好，世界").encode(),
+            stream=True,
         )
         async for chunk in result:
             msg = ChatMessage.decode(chunk)
