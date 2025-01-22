@@ -167,6 +167,36 @@ coagent translator -H type:ChatMessage --chat -d '{"role": "user", "content": "ä
 
 ## Patterns
 
+(The following patterns are mainly inspired by [Anthropic's Building effective agents][4] and [OpenAI's Orchestrating Agents][5].)
+
+### Basic: Augmented LLM
+
+**Augmented LLM** is an LLM enhanced with augmentations such as retrieval, tools, and memory. Our current models can actively use these capabilitiesâ€”generating their own search queries, selecting appropriate tools, and determining what information to retain.
+
+<p align="center">
+<img src="assets/patterns-augmented-llm.png">
+</p>
+
+**Example** (see [examples/patterns/augmented_llm.py](examples/patterns/augmented_llm.py) for a runnable example):
+
+```python
+from coagent.agents import ChatAgent, ModelClient, tool
+from coagent.core import AgentSpec, new
+
+
+class Assistant(ChatAgent):
+    system = """You are an agent who can use tools."""
+    client = ModelClient(...)
+
+    @tool
+    async def query_weather(self, city: str) -> str:
+        """Query the weather in the given city."""
+        return f"The weather in {city} is sunny."
+
+
+assistant = AgentSpec("assistant", new(Assistant))
+```
+
 ### Workflow: Chaining
 
 **Chaining** decomposes a task into a sequence of steps, where each agent processes the output of the previous one.
@@ -423,3 +453,5 @@ triage = AgentSpec(
 [1]: https://docs.nats.io/nats-concepts/jetstream
 [2]: https://modelcontextprotocol.io/introduction
 [3]: https://docs.nats.io/running-a-nats-service/nats_docker/nats-docker-tutorial
+[4]: https://www.anthropic.com/research/building-effective-agents
+[5]: https://cookbook.openai.com/examples/orchestrating_agents
