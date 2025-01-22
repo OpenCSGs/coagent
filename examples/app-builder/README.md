@@ -12,10 +12,10 @@
 First, start the dev agent:
 
 ```bash
-export AZURE_MODEL=csg-gpt4
-export AZURE_API_BASE=https://opencsg-us.openai.azure.com
-export AZURE_API_VERSION=2024-02-15-preview
-export AZURE_API_KEY=<YOUR API KEY>
+export AZURE_MODEL="your-model-name"
+export AZURE_API_BASE="your-api-base"
+export AZURE_API_VERSION="your-api-version"
+export AZURE_API_KEY="your-api-key"
 
 python examples/app-builder/dev.py
 ```
@@ -23,10 +23,10 @@ python examples/app-builder/dev.py
 And then start the qa agent in the second terminal:
 
 ```bash
-export AZURE_MODEL=csg-gpt4
-export AZURE_API_BASE=https://opencsg-us.openai.azure.com
-export AZURE_API_VERSION=2024-02-15-preview
-export AZURE_API_KEY=<YOUR API KEY>
+export AZURE_MODEL="your-model-name"
+export AZURE_API_BASE="your-api-base"
+export AZURE_API_VERSION="your-api-version"
+export AZURE_API_KEY="your-api-key"
 
 python examples/app-builder/qa.py
 ```

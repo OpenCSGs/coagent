@@ -19,9 +19,9 @@ from autogen_ext.models import AzureOpenAIChatCompletionClient
 
 
 az_model_client = AzureOpenAIChatCompletionClient(
-    model="csg-gpt4",
-    api_version=os.getenv("AZURE_API_VERSION"),
+    model=os.getenv("AZURE_MODEL"),
     azure_endpoint=os.getenv("AZURE_API_BASE"),
+    api_version=os.getenv("AZURE_API_VERSION"),
     api_key=os.getenv("AZURE_API_KEY"),
     model_capabilities={
         "vision": True,

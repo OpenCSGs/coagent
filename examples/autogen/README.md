@@ -25,10 +25,10 @@ References:
 First, start a server in one terminal:
 
 ```bash
-export AZURE_MODEL=csg-gpt4
-export AZURE_API_BASE=https://opencsg-us.openai.azure.com
-export AZURE_API_VERSION=2024-02-15-preview
-export AZURE_API_KEY=<YOUR API KEY>
+export AZURE_MODEL="your-model-name"
+export AZURE_API_BASE="your-api-base"
+export AZURE_API_VERSION="your-api-version"
+export AZURE_API_KEY="your-api-key"
 
 python examples/using-autogen/autogen.py
 ```
