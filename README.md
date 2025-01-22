@@ -11,7 +11,8 @@ An open-source framework for building monolithic or distributed agentic systems,
 
 ## Latest Updates
 
-- 🚀 **2025-01-17**: Added integration with [LiteLLM](https://github.com/BerriAI/litellm).
+- 🚀 **2025-01-22**: Added support for [Model Context Protocol (MCP)][2].
+- **2025-01-17**: Added integration with [LiteLLM](https://github.com/BerriAI/litellm).
 
 
 ## Features
@@ -167,7 +168,7 @@ coagent translator -H type:ChatMessage --chat -d '{"role": "user", "content": "�
 
 ## Patterns
 
-(The following patterns are mainly inspired by [Anthropic's Building effective agents][4] and [OpenAI's Orchestrating Agents][5].)
+(The following patterns are mainly inspired by [Anthropic's Building effective agents][4] and [OpenAI's Handoffs][5].)
 
 ### Basic: Augmented LLM
 
@@ -439,6 +440,7 @@ triage = AgentSpec(
 ## Examples
 
 - [patterns](examples/patterns)
+- [mcp](examples/mcp)
 - [ping-pong](examples/ping-pong)
 - [stream-ping-pong](examples/stream-ping-pong)
 - [discovery](examples/discovery)
