@@ -50,6 +50,13 @@ async def run(
     else:
         agent_type, session_id = parts[0], uuid.uuid4().hex
 
+    probe = True
+    if agent_type == "discovery":
+        # The discovery agent is a system-provided agent, which is a distributed
+        # singleton and is always available.
+        session_id = ""
+        probe = False
+
     if server.startswith("nats://"):
         runtime = NATSRuntime.from_servers(server)
     elif server.startswith(("http://", "https://")):
@@ -62,7 +69,11 @@ async def run(
         try:
             if not stream:
                 response = await runtime.channel.publish(
-                    addr, msg, request=True, timeout=10
+                    addr,
+                    msg,
+                    request=True,
+                    timeout=10,
+                    probe=probe,
                 )
                 print_msg(response, oneline, filter)
             else:

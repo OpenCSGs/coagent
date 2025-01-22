@@ -27,8 +27,14 @@ python examples/discovery/server.py team2.dev "Dev Engineer in Team 2."
 python examples/discovery/server.py team3.qa "QA Engineer in Team 3."
 ```
 
-Then start a client in another terminal.
+Then discover the available agent types using the `coagent` CLI:
 
 ```bash
-python examples/discovery/client.py team1
+coagent discovery -H type:DiscoveryQuery -F .content.agents -d '{"namespace":"team1"}'
+```
+
+Or start a more-friendly client in another terminal:
+
+```bash
+python examples/discovery/client.py --namespace team1
 ```
