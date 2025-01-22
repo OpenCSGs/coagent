@@ -18,6 +18,10 @@ An open-source framework for building monolithic or distributed agentic systems,
 
 - [x] Event-driven
 - [x] Monolithic or Distributed
+    - [x] Local Runtime (In-process Runtime)
+    - [x] HTTP Runtime (HTTP-based Distributed Runtime)
+    - [x] NATS Runtime (NATS-based Distributed Runtime)
+        - [ ] Using NATS [JetStream][1]
 - [x] Single-agent
     - [x] Function-calling
     - [ ] ReAct
@@ -29,16 +33,13 @@ An open-source framework for building monolithic or distributed agentic systems,
     - [x] Dynamic orchestration
         - [x] Dynamic Triage
         - [x] Handoffs (based on async Swarm)
-        - [ ] Group Chat
-- [x] Runtime
-    - [x] Local Runtime (In-process Runtime)
-    - [x] HTTP Runtime (HTTP-based Distributed Runtime)
-    - [x] NATS Runtime (NATS-based Distributed Runtime)
-        - [ ] Using NATS [JetStream][1]
+- [x] Support Any LLM
+- [x] Support [Model Context Protocol (MCP)][2]
 - [x] [CoS](coagent/cos) (Multi-language support)
     - [x] [Python](examples/cos/cos.py)
     - [x] [Node.js](examples/cos/cos.js)
     - [x] [Go](examples/cos/goagent)
+    - [ ] Zig
     - [ ] Rust
 
 
@@ -111,7 +112,7 @@ python translator.py
 
 ### Distributed
 
-Start a NATS server ([docs][2]):
+Start a NATS server ([docs][3]):
 
 ```bash
 docker run -p 4222:4222 --name nats-server -ti nats:latest
@@ -420,4 +421,5 @@ triage = AgentSpec(
 
 
 [1]: https://docs.nats.io/nats-concepts/jetstream
-[2]: https://docs.nats.io/running-a-nats-service/nats_docker/nats-docker-tutorial
+[2]: https://modelcontextprotocol.io/introduction
+[3]: https://docs.nats.io/running-a-nats-service/nats_docker/nats-docker-tutorial
