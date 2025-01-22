@@ -17,13 +17,8 @@ class ChatMessage(Message):
     )
 
     def __add__(self, other: ChatMessage) -> ChatMessage:
-        return ChatMessage(
-            role=self.role,
-            content=self.content + other.content,
-            type=self.type,
-            sender=self.sender,
-            to_user=self.to_user,
-        )
+        self.content += other.content
+        return self
 
     def model_dump(self, **kwargs) -> dict[str, Any]:
         return super().model_dump(include={"role", "content"}, **kwargs)

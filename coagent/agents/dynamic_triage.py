@@ -21,7 +21,7 @@ from coagent.core.discovery import (
 )
 
 from .aswarm import Agent as SwarmAgent, Swarm
-from .chat_agent import ChatHistory, ChatMessage, StreamDelegate
+from .chat_agent import ChatHistory, ChatMessage, Delegate
 from .model_client import default_model_client, ModelClient
 
 
@@ -104,7 +104,7 @@ class DynamicTriage(BaseAgent):
 
     def _transfer_to_agent(self, agent_type: str):
         async def run() -> AsyncIterator[ChatMessage]:
-            async for chunk in StreamDelegate(self, agent_type).handle(self._history):
+            async for chunk in Delegate(self, agent_type).handle(self._history):
                 yield chunk
 
         return run
