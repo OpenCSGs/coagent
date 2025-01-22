@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from coagent.agents import ChatMessage, DynamicTriage, ModelClient, StreamChatAgent
+from coagent.agents import ChatAgent, ChatMessage, DynamicTriage, ModelClient
 from coagent.core import AgentSpec, new, set_stderr_logger
 from coagent.runtimes import LocalRuntime
 
@@ -15,7 +15,7 @@ client = ModelClient(
 billing = AgentSpec(
     "team.billing",  # Under the team namespace
     new(
-        StreamChatAgent,
+        ChatAgent,
         system="""\
 You are a billing support specialist. Follow these guidelines:
 1. Always start with "Billing Support Response:"
@@ -33,7 +33,7 @@ Keep responses professional but friendly.\
 account = AgentSpec(
     "team.account",  # Under the team namespace
     new(
-        StreamChatAgent,
+        ChatAgent,
         system="""\
 You are an account security specialist. Follow these guidelines:
 1. Always start with "Account Support Response:"

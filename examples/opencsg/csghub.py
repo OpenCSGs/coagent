@@ -2,7 +2,7 @@ import argparse
 import asyncio
 from enum import Enum
 
-from coagent.agents import StreamChatAgent, confirm, RunContext, tool
+from coagent.agents import ChatAgent, confirm, RunContext, tool
 from coagent.agents.messages import ChatMessage
 from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
 from coagent.runtimes import NATSRuntime
@@ -19,7 +19,7 @@ class Language(str, Enum):
     de = "de"
 
 
-class CSGHub(StreamChatAgent):
+class CSGHub(ChatAgent):
     """An agent that help users deal with tasks related to models."""
 
     system = "You are an assistant that help users deal with tasks related to models."

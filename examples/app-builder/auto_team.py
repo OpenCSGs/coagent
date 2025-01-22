@@ -1,11 +1,11 @@
 import asyncio
 
-from coagent.agents import StreamChatAgent, tool
+from coagent.agents import ChatAgent, tool
 from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
 from coagent.runtimes import NATSRuntime
 
 
-class AutoTeam(StreamChatAgent):
+class AutoTeam(ChatAgent):
     system = """You are an manager who manages a team that consists of a dev agent and a qa agent.
     
     Your team is responsible for build software for users, and you should follow these rules:

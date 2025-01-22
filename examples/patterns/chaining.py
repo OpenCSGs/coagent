@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from coagent.agents import ChatAgent, StreamChatAgent, Sequential, ModelClient
+from coagent.agents import ChatAgent, Sequential, ModelClient
 from coagent.agents.messages import ChatMessage
 from coagent.core import AgentSpec, new, set_stderr_logger
 from coagent.runtimes import LocalRuntime
@@ -62,7 +62,7 @@ Example:
 formatter = AgentSpec(
     "formatter",
     new(
-        StreamChatAgent,
+        ChatAgent,
         system="""\
 Format the sorted data as a markdown table with columns:
 | Metric | Value |

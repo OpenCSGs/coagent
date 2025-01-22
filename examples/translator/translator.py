@@ -1,6 +1,6 @@
 import asyncio
 
-from coagent.agents import StreamChatAgent
+from coagent.agents import ChatAgent
 from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
 from coagent.runtimes import NATSRuntime
 
@@ -8,7 +8,7 @@ from coagent.runtimes import NATSRuntime
 translator = AgentSpec(
     "translator",
     new(
-        StreamChatAgent,
+        ChatAgent,
         system="""You are a professional translator that can translate Chinese to English.""",
     ),
 )
