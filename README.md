@@ -69,14 +69,14 @@ Implement the agent:
 import asyncio
 import os
 
-from coagent.agents import StreamChatAgent, ChatMessage, ModelClient
+from coagent.agents import ChatAgent, ChatMessage, ModelClient
 from coagent.core import AgentSpec, new, set_stderr_logger
 from coagent.runtimes import LocalRuntime
 
 translator = AgentSpec(
     "translator",
     new(
-        StreamChatAgent,
+        ChatAgent,
         system="You are a professional translator that can translate Chinese to English.",
         client=ModelClient(model="openai/gpt-4o", api_key=os.getenv("OPENAI_API_KEY")),
     ),
@@ -125,14 +125,14 @@ Implement the agent:
 import asyncio
 import os
 
-from coagent.agents import StreamChatAgent, ModelClient
+from coagent.agents import ChatAgent, ModelClient
 from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
 from coagent.runtimes import NATSRuntime
 
 translator = AgentSpec(
     "translator",
     new(
-        StreamChatAgent,
+        ChatAgent,
         system="You are a professional translator that can translate Chinese to English.",
         client=ModelClient(model="openai/gpt-4o", api_key=os.getenv("OPENAI_API_KEY")),
     ),
@@ -179,7 +179,7 @@ coagent translator -H type:ChatMessage --chat -d '{"role": "user", "content": "ä
 **Example** (see [examples/patterns/chaining.py](examples/patterns/chaining.py) for a runnable example):
 
 ```python
-from coagent.agents import ChatAgent, StreamChatAgent, Sequential, ModelClient
+from coagent.agents import ChatAgent, Sequential, ModelClient
 from coagent.core import AgentSpec, new
 
 client = ModelClient(...)
@@ -233,7 +233,7 @@ Example:
 formatter = AgentSpec(
     "formatter",
     new(
-        StreamChatAgent,
+        ChatAgent,
         system="""\
 Format the sorted data as a markdown table with columns:
 | Metric | Value |
@@ -352,7 +352,7 @@ parallel = AgentSpec(
 **Example** (see [examples/patterns/triaging.py](examples/patterns/triaging.py) for a runnable example):
 
 ```python
-from coagent.agents import DynamicTriage, ModelClient, StreamChatAgent
+from coagent.agents import ChatAgent, DynamicTriage, ModelClient
 from coagent.core import AgentSpec, new
 
 client = ModelClient(...)
@@ -360,7 +360,7 @@ client = ModelClient(...)
 billing = AgentSpec(
     "team.billing",  # Under the team namespace
     new(
-        StreamChatAgent,
+        ChatAgent,
         system="""\
 You are a billing support specialist. Follow these guidelines:
 1. Always start with "Billing Support Response:"
@@ -378,7 +378,7 @@ Keep responses professional but friendly.\
 account = AgentSpec(
     "team.account",  # Under the team namespace
     new(
-        StreamChatAgent,
+        ChatAgent,
         system="""\
 You are an account security specialist. Follow these guidelines:
 1. Always start with "Account Support Response:"
