@@ -1,7 +1,9 @@
+import dataclasses
 from typing import Any, AsyncContextManager, Callable
 from urllib.parse import urljoin
 
-from mcp import ClientSession, Tool
+from coagent.core.exceptions import InternalError
+from mcp import ClientSession, Tool, McpError
 from mcp.types import ImageContent, TextContent
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client, StdioServerParameters
@@ -12,22 +14,29 @@ from .chat_agent import ChatAgent, wrap_error
 from .model_client import default_model_client, ModelClient
 
 
+@dataclasses.dataclass
+class Prompt:
+    name: str
+    arguments: dict[str, str] | None = None
+
+
 class MCPAgent(ChatAgent):
     """An agent that can use tools provided by MCP (Model Context Protocol) servers."""
 
     def __init__(
         self,
-        system: str = "",
+        system: Prompt | None = None,
         mcp_server_base_url: str = "",
         client: ModelClient = default_model_client,
     ) -> None:
-        super().__init__(system=system, client=client)
+        super().__init__(system="", client=client)
 
         self._mcp_server_base_url: str = mcp_server_base_url
         self._mcp_client_transport: AsyncContextManager[tuple] | None = None
         self._mcp_client_session: ClientSession | None = None
 
         self._mcp_swarm_agent: SwarmAgent | None = None
+        self._mcp_system_prompt: Prompt | None = system
 
     @property
     def mcp_server_base_url(self) -> str:
@@ -76,14 +85,33 @@ class MCPAgent(ChatAgent):
 
     async def get_swarm_agent(self) -> SwarmAgent:
         if not self._mcp_swarm_agent:
+            system = await self._get_system_prompt()
             tools = await self._get_tools()
             self._mcp_swarm_agent = SwarmAgent(
                 name=self.name,
                 model=self.client.model,
-                instructions=self.system,
+                instructions=system,
                 functions=[wrap_error(t) for t in tools],
             )
         return self._mcp_swarm_agent
+
+    async def _get_system_prompt(self) -> str:
+        if not self._mcp_system_prompt:
+            return ""
+
+        try:
+            prompt = await self._mcp_client_session.get_prompt(
+                **dataclasses.asdict(self._mcp_system_prompt),
+            )
+        except McpError as exc:
+            raise InternalError(str(exc))
+
+        content = prompt.messages[0].content
+        match content:
+            case TextContent():
+                return content.text
+            case _:  # ImageContent() or EmbeddedResource() or other types
+                return ""
 
     async def _get_tools(self) -> list[Callable]:
         result = await self._mcp_client_session.list_tools()
