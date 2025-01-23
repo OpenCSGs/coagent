@@ -36,7 +36,7 @@ class MCPAgent(ChatAgent):
         self._mcp_client_session: ClientSession | None = None
 
         self._mcp_swarm_agent: SwarmAgent | None = None
-        self._mcp_system_prompt: Prompt | None = system
+        self._mcp_system_prompt_config: Prompt | None = system
 
     @property
     def mcp_server_base_url(self) -> str:
@@ -85,7 +85,7 @@ class MCPAgent(ChatAgent):
 
     async def get_swarm_agent(self) -> SwarmAgent:
         if not self._mcp_swarm_agent:
-            system = await self._get_system_prompt()
+            system = await self._get_prompt(self._mcp_system_prompt_config)
             tools = await self._get_tools()
             self._mcp_swarm_agent = SwarmAgent(
                 name=self.name,
@@ -95,13 +95,13 @@ class MCPAgent(ChatAgent):
             )
         return self._mcp_swarm_agent
 
-    async def _get_system_prompt(self) -> str:
-        if not self._mcp_system_prompt:
+    async def _get_prompt(self, prompt_config: Prompt | None) -> str:
+        if not prompt_config:
             return ""
 
         try:
             prompt = await self._mcp_client_session.get_prompt(
-                **dataclasses.asdict(self._mcp_system_prompt),
+                **dataclasses.asdict(prompt_config),
             )
         except McpError as exc:
             raise InternalError(str(exc))
