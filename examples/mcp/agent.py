@@ -1,6 +1,7 @@
 import asyncio
 
 from coagent.agents import MCPAgent
+from coagent.agents.mcp_agent import Prompt
 from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
 from coagent.runtimes import NATSRuntime
 
@@ -9,7 +10,7 @@ mcp = AgentSpec(
     "mcp",
     new(
         MCPAgent,
-        system="""You are an agent who can use tools.""",
+        system=Prompt(name="system_prompt", arguments={"role": "Weather Reporter"}),
         mcp_server_base_url="http://localhost:8080",
     ),
 )
