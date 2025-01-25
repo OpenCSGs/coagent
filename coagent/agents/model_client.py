@@ -39,6 +39,7 @@ class ModelClient(BaseModel):
         temperature: float = 0.1,
         tools: list | None = None,
         tool_choice: str | None = None,
+        response_format: dict | None = None,
         **kwargs,
     ):  # -> ModelResponse:
         import litellm
@@ -54,6 +55,7 @@ class ModelClient(BaseModel):
             api_base=self.api_base,
             api_version=self.api_version,
             api_key=self.api_key,
+            response_format=response_format,
             **kwargs,
         )
         return response

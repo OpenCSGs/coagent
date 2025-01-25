@@ -44,6 +44,7 @@ class Swarm:
         model_override: str,
         stream: bool,
         debug: bool,
+        response_format: dict | None = None,
     ) -> ChatCompletionMessage:
         context_variables = defaultdict(str, context_variables)
         instructions = (
@@ -65,6 +66,7 @@ class Swarm:
         create_params = {
             "model": model_override or agent.model,
             "messages": messages,
+            "response_format": response_format,
             "tools": tools or None,
             "tool_choice": agent.tool_choice,
             "stream": stream,
@@ -217,6 +219,7 @@ class Swarm:
         self,
         agent: Agent,
         messages: List,
+        response_format: dict | None = None,
         context_variables: dict = {},
         model_override: str = None,
         debug: bool = False,
@@ -248,6 +251,7 @@ class Swarm:
             completion = self.get_chat_completion(
                 agent=active_agent,
                 history=history,
+                response_format=response_format,
                 context_variables=context_variables,
                 model_override=model_override,
                 stream=True,

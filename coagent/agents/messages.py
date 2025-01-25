@@ -9,6 +9,7 @@ from coagent.core import Message
 class ChatMessage(Message):
     role: str
     content: str
+    response_format: dict | None = None
 
     type: str = Field(default="", description="The type of the message. e.g. confirm")
     sender: str = Field(default="", description="The sending agent of the message.")
@@ -29,3 +30,4 @@ class ChatMessage(Message):
 
 class ChatHistory(Message):
     messages: list[ChatMessage]
+    response_format: dict | None = None

@@ -241,7 +241,7 @@ class ChatAgent(BaseAgent):
     async def handle_message(
         self, msg: ChatMessage, ctx: Context
     ) -> AsyncIterator[ChatMessage]:
-        history = ChatHistory(messages=[msg])
+        history = ChatHistory(messages=[msg], response_format=msg.response_format)
         response = self._handle_history(history, ctx)
         async for resp in response:
             yield resp
@@ -260,6 +260,7 @@ class ChatAgent(BaseAgent):
         response = self._swarm_client.run_and_stream(
             agent=swarm_agent,
             messages=[m.model_dump() for m in msg.messages],
+            response_format=msg.response_format,
             context_variables=msg.extensions,
         )
         async for resp in response:
