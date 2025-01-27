@@ -1,20 +1,11 @@
 import asyncio
 import functools
-from typing import AsyncIterator, Type
+from typing import AsyncIterator
 
 from coagent.core import logger
-from pydantic import BaseModel
 
 from .messages import ChatMessage
 from .model_client import default_model_client, ModelClient
-
-
-def type_to_response_format_param(
-    response_format: Type[BaseModel] | dict | None,
-) -> dict | None:
-    import litellm.utils
-
-    return litellm.utils.type_to_response_format_param(response_format)
 
 
 async def chat(

@@ -12,7 +12,7 @@ from pydantic.fields import FieldInfo
 
 from .aswarm import Agent as SwarmAgent, Swarm
 from .aswarm.util import function_to_jsonschema
-from .messages import ChatMessage, ChatHistory
+from .messages import ChatMessage, ChatHistory, StructuredOutput
 from .model_client import default_model_client, ModelClient
 from .util import is_user_confirmed
 
@@ -233,7 +233,7 @@ class ChatAgent(BaseAgent):
     async def handle_history(
         self, msg: ChatHistory, ctx: Context
     ) -> AsyncIterator[ChatMessage]:
-        response = self._handle_history(msg, ctx)
+        response = self._handle_history(msg)
         async for resp in response:
             yield resp
 
@@ -241,13 +241,30 @@ class ChatAgent(BaseAgent):
     async def handle_message(
         self, msg: ChatMessage, ctx: Context
     ) -> AsyncIterator[ChatMessage]:
-        history = ChatHistory(messages=[msg], response_format=msg.response_format)
-        response = self._handle_history(history, ctx)
+        history = ChatHistory(messages=[msg])
+        response = self._handle_history(history)
         async for resp in response:
             yield resp
 
+    @handler
+    async def handle_structured_output(
+        self, msg: StructuredOutput, ctx: Context
+    ) -> AsyncIterator[ChatMessage]:
+        match msg.input:
+            case ChatMessage():
+                history = ChatHistory(messages=[msg.input])
+                response = self._handle_history(history, msg.output_schema)
+                async for resp in response:
+                    yield resp
+            case ChatHistory():
+                response = self._handle_history(msg.input, msg.output_schema)
+                async for resp in response:
+                    yield resp
+
     async def _handle_history(
-        self, msg: ChatHistory, ctx: Context
+        self,
+        msg: ChatHistory,
+        response_format: dict | None = None,
     ) -> AsyncIterator[ChatMessage]:
         # For now, we assume that the agent is processing messages sequentially.
         self._history: ChatHistory = msg
@@ -260,7 +277,7 @@ class ChatAgent(BaseAgent):
         response = self._swarm_client.run_and_stream(
             agent=swarm_agent,
             messages=[m.model_dump() for m in msg.messages],
-            response_format=msg.response_format,
+            response_format=response_format,
             context_variables=msg.extensions,
         )
         async for resp in response:
