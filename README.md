@@ -11,20 +11,22 @@ An open-source framework for building monolithic or distributed agentic systems,
 
 ## Latest Updates
 
-- 🚀 **2025-01-22**: Added support for [Model Context Protocol (MCP)][2].
+- 🚀 **2025-01-28**: Added support for [Structured Outputs][2].
+- **2025-01-22**: Added support for [Model Context Protocol][3].
 - **2025-01-17**: Added integration with [LiteLLM](https://github.com/BerriAI/litellm).
 
 
 ## Features
 
-- [x] Event-driven
+- [x] Event-driven & Scalable on-demand
 - [x] Monolithic or Distributed
     - [x] Local Runtime (In-process Runtime)
     - [x] HTTP Runtime (HTTP-based Distributed Runtime)
     - [x] NATS Runtime (NATS-based Distributed Runtime)
         - [ ] Using NATS [JetStream][1]
 - [x] Single-agent
-    - [x] Function-calling
+    - [x] [Function calling](https://platform.openai.com/docs/guides/function-calling)
+    - [x] [Structured Outputs][2] ([example](examples/structured-outputs))
     - [ ] ReAct
 - [x] Multi-agent orchestration
     - [x] Agent Discovery
@@ -34,8 +36,8 @@ An open-source framework for building monolithic or distributed agentic systems,
     - [x] Dynamic orchestration
         - [x] Dynamic Triage
         - [x] Handoffs (based on async Swarm)
-- [x] Support Any LLM
-- [x] Support [Model Context Protocol (MCP)][2]
+- [x] Support any LLM
+- [x] Support [Model Context Protocol][3] ([example](examples/mcp))
 - [x] [CoS](coagent/cos) (Multi-language support)
     - [x] [Python](examples/cos/cos.py)
     - [x] [Node.js](examples/cos/cos.js)
@@ -113,7 +115,7 @@ python translator.py
 
 ### Distributed
 
-Start a NATS server ([docs][3]):
+Start a NATS server ([docs][4]):
 
 ```bash
 docker run -p 4222:4222 --name nats-server -ti nats:latest
@@ -168,7 +170,7 @@ coagent translator -H type:ChatMessage --chat -d '{"role": "user", "content": "�
 
 ## Patterns
 
-(The following patterns are mainly inspired by [Anthropic's Building effective agents][4] and [OpenAI's Handoffs][5].)
+(The following patterns are mainly inspired by [Anthropic's Building effective agents][5] and [OpenAI's Handoffs][6].)
 
 ### Basic: Augmented LLM
 
@@ -441,6 +443,7 @@ triage = AgentSpec(
 
 - [patterns](examples/patterns)
 - [mcp](examples/mcp)
+- [structured-outputs](examples/structured-outputs)
 - [ping-pong](examples/ping-pong)
 - [stream-ping-pong](examples/stream-ping-pong)
 - [discovery](examples/discovery)
@@ -453,7 +456,8 @@ triage = AgentSpec(
 
 
 [1]: https://docs.nats.io/nats-concepts/jetstream
-[2]: https://modelcontextprotocol.io/introduction
-[3]: https://docs.nats.io/running-a-nats-service/nats_docker/nats-docker-tutorial
-[4]: https://www.anthropic.com/research/building-effective-agents
-[5]: https://cookbook.openai.com/examples/orchestrating_agents
+[2]: https://platform.openai.com/docs/guides/structured-outputs
+[3]: https://modelcontextprotocol.io/introduction
+[4]: https://docs.nats.io/running-a-nats-service/nats_docker/nats-docker-tutorial
+[5]: https://www.anthropic.com/research/building-effective-agents
+[6]: https://cookbook.openai.com/examples/orchestrating_agents
