@@ -33,7 +33,7 @@ structured = AgentSpec(
 
 
 async def main():
-    async with NATSRuntime.from_servers("nats://127.0.0.1:4222") as runtime:
+    async with NATSRuntime.from_servers() as runtime:
         await runtime.register(structured)
         await idle_loop()
 

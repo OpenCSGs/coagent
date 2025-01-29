@@ -161,7 +161,7 @@ export OPENAI_API_KEY="your-openai-key"
 python translator.py
 ```
 
-Communicate with the agent:
+Communicate with the agent using the `coagent` CLI:
 
 ```bash
 coagent translator -H type:ChatMessage --chat -d '{"role": "user", "content": "你好，世界"}'
