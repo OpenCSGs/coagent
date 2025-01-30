@@ -9,7 +9,7 @@ from coagent.core import (
     NO_REPLY,
     RawMessage,
     Reply,
-    SetReplyAgent,
+    SetReplyInfo,
 )
 
 
@@ -95,7 +95,7 @@ class Parallel(BaseAgent):
             addr = Address(name=agent_type, id=self.address.id)
             await self.channel.publish(
                 addr,
-                SetReplyAgent(reply_info=aggregator_reply).encode(),
+                SetReplyInfo(reply_info=aggregator_reply).encode(),
             )
 
         # Set the current agent to no-reply mode.

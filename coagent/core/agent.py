@@ -15,7 +15,7 @@ from .messages import (
     Message,
     Started,
     Stopped,
-    SetReplyAgent,
+    SetReplyInfo,
     StopIteration,
 )
 from .types import (
@@ -132,7 +132,7 @@ class BaseAgent(Agent):
         # this would result in a lot of messages.
         self._last_msg_received_at_lock: asyncio.Lock = asyncio.Lock()
 
-        # Normally `reply` is set by an orchestration agent by sending a `SetReplyAgent` message.
+        # Normally `reply` is set by an orchestration agent by sending a `SetReplyInfo` message.
         self.reply: Reply | None = None
         self._reply_lock: asyncio.Lock = asyncio.Lock()
 
@@ -144,7 +144,7 @@ class BaseAgent(Agent):
             "Cancel": Cancel,
             "Started": Started,
             "Stopped": Stopped,
-            "SetReplyAgent": SetReplyAgent,
+            "SetReplyInfo": SetReplyInfo,
             "ProbeAgent": ProbeAgent,
             "Empty": Empty,
             **message_types,
@@ -279,7 +279,7 @@ class BaseAgent(Agent):
                 case Stopped():
                     await self.stopped()
 
-                case SetReplyAgent():
+                case SetReplyInfo():
                     await self._set_reply_info(msg.reply_info)
 
                 case ProbeAgent() | Empty():

@@ -122,7 +122,7 @@ class ProbeAgent(Message):
     pass
 
 
-class SetReplyAgent(Message):
+class SetReplyInfo(Message):
     """A message to set the reply information of an agent.
 
     This is mainly useful when orchestrating multiple agents to work together.

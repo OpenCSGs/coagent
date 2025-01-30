@@ -5,7 +5,7 @@ from coagent.core import (
     GenericMessage,
     NO_REPLY,
     Reply,
-    SetReplyAgent,
+    SetReplyInfo,
     handler,
 )
 
@@ -25,7 +25,7 @@ class Sequential(BaseAgent):
             reply = Reply(address=next_addr)
             await self.channel.publish(
                 addr,
-                SetReplyAgent(reply_info=reply).encode(),
+                SetReplyInfo(reply_info=reply).encode(),
             )
 
         # Set the current agent to no-reply mode.
@@ -42,7 +42,7 @@ class Sequential(BaseAgent):
             last_addr = Address(name=self._agent_types[-1], id=self.address.id)
             await self.channel.publish(
                 last_addr,
-                SetReplyAgent(reply_info=reply).encode(),
+                SetReplyInfo(reply_info=reply).encode(),
             )
 
         # Send the message to the first agent in the list.
