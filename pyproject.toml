@@ -29,7 +29,7 @@ httpx-sse = "0.4.0"
 blinker = "1.9.0"
 loguru = "0.7.3"
 jq = "1.8.0"
-litellm = "1.55.12"
+litellm = "1.60.4"
 mcp = "1.2.0"
 
 [tool.pyright]

@@ -7,8 +7,17 @@ from pydantic import BaseModel, Field, field_validator, field_serializer
 
 
 class ChatMessage(Message):
-    role: str
-    content: str
+    role: str = Field(
+        ..., description="The role of the message. (e.g. `user`, `assistant`)"
+    )
+    content: str = Field(
+        default="",
+        description="The content of the message. For reasoning models, this is the content of the final answer.",
+    )
+    reasoning_content: str = Field(
+        default="",
+        description="The content of the CoT. Only available for reasoning models.",
+    )
 
     type: str = Field(default="", description="The type of the message. e.g. confirm")
     sender: str = Field(default="", description="The sending agent of the message.")
@@ -18,7 +27,12 @@ class ChatMessage(Message):
 
     def __add__(self, other: ChatMessage) -> ChatMessage:
         self.content += other.content
+        self.reasoning_content += other.reasoning_content
         return self
+
+    @property
+    def has_content(self) -> bool:
+        return bool(self.content or self.reasoning_content)
 
     def model_dump(self, **kwargs) -> dict[str, Any]:
         return super().model_dump(include={"role", "content"}, **kwargs)

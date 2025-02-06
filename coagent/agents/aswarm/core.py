@@ -234,6 +234,7 @@ class Swarm:
         while len(history) - init_len < max_turns:
             message = {
                 "content": "",
+                "reasoning_content": "",
                 # No `sender` param is supported by model
                 # "sender": agent.name,
                 "role": "assistant",
@@ -263,11 +264,16 @@ class Swarm:
                 delta = json.loads(chunk.choices[0].delta.json())
                 if delta["role"] == "assistant":
                     delta["sender"] = active_agent.name
-                if delta["content"]:
+
+                delta_content = delta.get("content") or ""
+                delta_reasoning_content = delta.get("reasoning_content") or ""
+                if delta_content or delta_reasoning_content:
                     yield ChatMessage(
                         role=delta["role"] or "assistant",
-                        content=delta["content"],
+                        content=delta_content,
+                        reasoning_content=delta_reasoning_content,
                     )
+
                 delta.pop("role", None)
                 delta.pop("sender", None)
                 merge_chunk(message, delta)

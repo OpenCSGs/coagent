@@ -281,7 +281,7 @@ class ChatAgent(BaseAgent):
             context_variables=msg.extensions,
         )
         async for resp in response:
-            if isinstance(resp, ChatMessage) and resp.content:
+            if isinstance(resp, ChatMessage) and resp.has_content:
                 yield resp
 
     async def update_user_confirmed(self, history: ChatHistory) -> None:
