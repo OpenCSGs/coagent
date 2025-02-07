@@ -37,7 +37,7 @@ async def main():
                     reasoning_started = True
                 print(msg.reasoning_content, end="", flush=True)
             if msg.content:
-                if not reasoning_stopped:
+                if reasoning_started and not reasoning_stopped:
                     print("</think>", flush=True)
                     reasoning_stopped = True
                 print(msg.content, end="", flush=True)
