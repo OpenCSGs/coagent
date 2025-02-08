@@ -11,7 +11,8 @@ An open-source framework for building monolithic or distributed agentic systems,
 
 ## Latest Updates
 
-- 🚀 **2025-01-28**: Added support for [Structured Outputs][2].
+- 🚀 **2025-02-08**: Added support for [DeepSeek-R1](https://api-docs.deepseek.com/news/news250120), check out the [example](examples/deepseek-r1).
+- **2025-01-28**: Added support for [Structured Outputs][2].
 - **2025-01-22**: Added support for [Model Context Protocol][3].
 - **2025-01-17**: Added integration with [LiteLLM](https://github.com/BerriAI/litellm).
 
@@ -444,6 +445,7 @@ triage = AgentSpec(
 - [patterns](examples/patterns)
 - [mcp](examples/mcp)
 - [structured-outputs](examples/structured-outputs)
+- [deepseek-r1](examples/deepseek-r1)
 - [ping-pong](examples/ping-pong)
 - [stream-ping-pong](examples/stream-ping-pong)
 - [discovery](examples/discovery)
