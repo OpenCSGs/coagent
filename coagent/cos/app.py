@@ -44,11 +44,6 @@ class Application:
                 self.runtime.publish,
                 methods=["POST"],
             ),
-            Route(
-                "/runtime/channel/publish_multi",
-                self.runtime.publish_multi,
-                methods=["POST"],
-            ),
         ]
         return Starlette(
             debug=True,

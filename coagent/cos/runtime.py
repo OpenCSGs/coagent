@@ -128,19 +128,44 @@ class CosRuntime:
 
     async def publish(self, request: Request):
         data: dict = await request.json()
-        addr = Address.decode(data["addr"])
-        msg = RawMessage.decode(data["msg"])
 
-        try:
-            await self._update_message_header_extensions(msg, request)
+        addr: Address = Address.decode(data["addr"])
+        msg: RawMessage = RawMessage.decode(data["msg"])
+        stream: bool = data.get("stream", False)
+        probe: bool = data.get("probe", True)
 
-            resp: RawMessage | None = await self._runtime.channel.publish(
-                addr=addr,
-                msg=msg,
+        await self._update_message_header_extensions(msg, request)
+
+        if stream:
+            return await self._publish_stream(addr, msg, probe=probe)
+        else:
+            return await self._publish(
+                addr,
+                msg,
                 request=data.get("request", False),
                 reply=data.get("reply", ""),
                 timeout=data.get("timeout", 0.5),
-                probe=data.get("probe", True),
+                probe=probe,
+            )
+
+    async def _publish(
+        self,
+        addr: Address,
+        msg: RawMessage,
+        request: bool,
+        reply: str,
+        timeout: float,
+        probe: bool,
+    ):
+        try:
+            resp: RawMessage | None = await self._runtime.channel.publish(
+                addr=addr,
+                msg=msg,
+                stream=False,
+                request=request,
+                reply=reply,
+                timeout=timeout,
+                probe=probe,
             )
         except BaseError as exc:
             return JSONResponse(exc.encode(mode="json"), status_code=404)
@@ -155,17 +180,12 @@ class CosRuntime:
         else:
             return JSONResponse(resp.encode(mode="json"))
 
-    async def publish_multi(self, request: Request):
-        data: dict = await request.json()
-        msg = RawMessage.decode(data["msg"])
-        await self._update_message_header_extensions(msg, request)
-
-        addr = Address.decode(data["addr"])
-        msgs = await self._runtime.channel.publish(
+    async def _publish_stream(self, addr: Address, msg: RawMessage, probe: bool):
+        msgs: AsyncIterator[RawMessage] = await self._runtime.channel.publish(
             addr=addr,
             msg=msg,
             stream=True,
-            probe=data.get("probe", True),
+            probe=probe,
         )
 
         async def event_stream() -> AsyncIterator[str]:
