@@ -40,9 +40,10 @@ class Bot:
     async def asend(cls, query: str) -> AsyncIterator[ChatMessage]:
         msg = ChatMessage(role="user", content=query)
         cls.history.messages.append(msg)
-        result = cls.runtime.channel.publish_multi(
+        result = await cls.runtime.channel.publish(
             cls.addr,
             cls.history.encode(),
+            stream=True,
         )
         full_reply = ChatMessage(role="assistant", content="")
         async for chunk in result:

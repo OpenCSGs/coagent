@@ -1,3 +1,4 @@
+import abc
 import asyncio
 from typing import AsyncIterator
 
@@ -71,19 +72,63 @@ class BaseRuntime(Runtime):
 
 
 class BaseChannel(Channel):
-    async def publish_multi(
+    async def publish(
+        self,
+        addr: Address,
+        msg: RawMessage,
+        stream: bool = False,
+        request: bool = False,
+        reply: str = "",
+        timeout: float = 0.5,
+        probe: bool = True,
+    ) -> AsyncIterator[RawMessage] | RawMessage | None:
+        if stream:
+            return self._publish_stream(addr, msg, probe=probe)
+        else:
+            return await self._publish(
+                addr,
+                msg,
+                request=request,
+                stream=stream,
+                reply=reply,
+                timeout=timeout,
+                probe=probe,
+            )
+
+    @abc.abstractmethod
+    async def _publish(
+        self,
+        addr: Address,
+        msg: RawMessage,
+        request: bool = False,
+        stream: bool = False,
+        reply: str = "",
+        timeout: float = 0.5,
+        probe: bool = True,
+    ) -> RawMessage | None:
+        pass
+
+    async def _publish_stream(
         self,
         addr: Address,
         msg: RawMessage,
         probe: bool = True,
     ) -> AsyncIterator[RawMessage]:
-        """A default implementation that leverages the channel's own subscribe and publish methods."""
+        """Publish a message and wait for multiple reply messages.
+
+        Args:
+            addr (Address): The address of the agent.
+            msg (RawMessage): The raw message to send.
+            probe (bool, optional): Whether to probe the agent before sending the message. Defaults to True.
+
+        This is a default implementation that leverages the channel's own subscribe and _publish methods.
+        """
         queue: QueueSubscriptionIterator = QueueSubscriptionIterator()
 
         inbox = await self.new_reply_topic()
         sub = await self.subscribe(addr=Address(name=inbox), handler=queue.receive)
 
-        await self.publish(
+        await self._publish(
             addr,
             msg,
             request=True,

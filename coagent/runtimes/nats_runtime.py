@@ -57,26 +57,6 @@ class NATSChannel(BaseChannel):
         except ConnectionClosedError:
             pass
 
-    async def publish(
-        self,
-        addr: Address,
-        msg: RawMessage,
-        request: bool = False,
-        stream: bool = False,
-        reply: str = "",
-        timeout: float = 0.5,
-        probe: bool = True,
-    ) -> RawMessage | None:
-        return await self._publish(
-            addr,
-            msg,
-            request=request,
-            stream=stream,
-            reply=reply,
-            timeout=timeout,
-            probe=probe,
-        )
-
     async def subscribe(
         self,
         addr: Address,
@@ -102,14 +82,13 @@ class NATSChannel(BaseChannel):
         reply: str = "",
         timeout: float = 0.5,
         probe: bool = True,
-        nonblocking: bool = False,
     ) -> RawMessage | None:
         if addr.is_reply or not probe or await self._probe(addr):
             return await self._nats_publish(
                 addr, msg, request=request, stream=stream, reply=reply, timeout=timeout
             )
 
-        if request or not nonblocking:
+        if request:
             # If in request-reply (or non-blocking) mode, always wait for the reply.
             return await self._create_and_publish(
                 addr,

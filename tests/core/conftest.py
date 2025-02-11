@@ -1,7 +1,7 @@
 import asyncio
 import functools
 import inspect
-from typing import Callable, Awaitable, AsyncIterator
+from typing import Callable, Awaitable
 
 import pytest
 
@@ -21,19 +21,12 @@ class NopChannel(Channel):
         self,
         addr: Address,
         msg: RawMessage,
+        stream: bool = False,
         request: bool = False,
         reply: str = "",
         timeout: float = 0.5,
         probe: bool = True,
     ) -> RawMessage | None:
-        pass
-
-    async def publish_multi(
-        self,
-        addr: Address,
-        msg: RawMessage,
-        probe: bool = True,
-    ) -> AsyncIterator[RawMessage]:
         pass
 
     async def subscribe(

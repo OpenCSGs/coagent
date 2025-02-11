@@ -111,7 +111,9 @@ class TestStreamAgent:
         _task = run_agent_in_task(agent)
         await yield_control()
 
-        result = local_channel.publish_multi(addr, Query().encode(), probe=False)
+        result = await local_channel.publish(
+            addr, Query().encode(), stream=True, probe=False
+        )
         async for chunk in result:
             assert chunk.header.type == "Reply"
 
@@ -135,7 +137,9 @@ class TestStreamAgent:
         _ = asyncio.create_task(cancel())
         await yield_control()
 
-        result = local_channel.publish_multi(addr, Query().encode(), probe=False)
+        result = await local_channel.publish(
+            addr, Query().encode(), stream=True, probe=False
+        )
         with pytest.raises(BaseError) as exc:
             async for _chunk in result:
                 pass

@@ -161,9 +161,10 @@ class CosRuntime:
         await self._update_message_header_extensions(msg, request)
 
         addr = Address.decode(data["addr"])
-        msgs = self._runtime.channel.publish_multi(
+        msgs = await self._runtime.channel.publish(
             addr=addr,
             msg=msg,
+            stream=True,
             probe=data.get("probe", True),
         )
 

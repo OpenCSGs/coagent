@@ -236,37 +236,21 @@ class Channel(abc.ABC):
         self,
         addr: Address,
         msg: RawMessage,
-        request: bool = False,
         stream: bool = False,
+        request: bool = False,
         reply: str = "",
         timeout: float = 0.5,
         probe: bool = True,
-    ) -> RawMessage | None:
-        """Publish a message.
+    ) -> AsyncIterator[RawMessage] | RawMessage | None:
+        """Publish a message to the given address.
 
         Args:
             addr (Address): The address of the agent.
             msg (RawMessage): The raw message to send.
-            request (bool, optional): Whether this is a request. Defaults to False.
             stream (bool, optional): Whether to request a streaming result. Defaults to False.
+            request (bool, optional): Whether this is a request. Defaults to False. If `stream` is True, then this is always True.
             reply (str, optional): If `request` is True, then this will be the subject to reply to. Defaults to "".
             timeout (float, optional): If `request` is True, then this will be the timeout for the response. Defaults to 0.5.
-            probe (bool, optional): Whether to probe the agent before sending the message. Defaults to True.
-        """
-        pass
-
-    @abc.abstractmethod
-    async def publish_multi(
-        self,
-        addr: Address,
-        msg: RawMessage,
-        probe: bool = True,
-    ) -> AsyncIterator[RawMessage]:
-        """Publish a message and wait for multiple reply messages.
-
-        Args:
-            addr (Address): The address of the agent.
-            msg (RawMessage): The raw message to send.
             probe (bool, optional): Whether to probe the agent before sending the message. Defaults to True.
         """
         pass
@@ -310,7 +294,7 @@ class AgentSpec:
         stream: bool = False,
         session_id: str = "",
         timeout: float = 0.5,
-    ) -> RawMessage | AsyncIterator[RawMessage]:
+    ) -> AsyncIterator[RawMessage] | RawMessage | None:
         """Create an agent and run it with the given message."""
         if self.__runtime is None:
             raise ValueError(f"AgentSpec {self.name} is not registered to a runtime.")
@@ -318,12 +302,9 @@ class AgentSpec:
         session_id = session_id or uuid.uuid4().hex
         addr = Address(name=self.name, id=session_id)
 
-        if stream:
-            return self.__runtime.channel.publish_multi(addr, msg)
-        else:
-            return await self.__runtime.channel.publish(
-                addr, msg, request=True, timeout=timeout
-            )
+        return await self.__runtime.channel.publish(
+            addr, msg, stream=stream, request=True, timeout=timeout
+        )
 
 
 class Runtime(abc.ABC):

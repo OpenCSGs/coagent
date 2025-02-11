@@ -67,17 +67,18 @@ async def run(
     async with runtime:
         addr = Address(name=agent_type, id=session_id)
         try:
+            response = await runtime.channel.publish(
+                addr,
+                msg,
+                stream=stream,
+                request=True,
+                timeout=10,
+                probe=probe,
+            )
             if not stream:
-                response = await runtime.channel.publish(
-                    addr,
-                    msg,
-                    request=True,
-                    timeout=10,
-                    probe=probe,
-                )
                 print_msg(response, oneline, filter)
             else:
-                async for chunk in runtime.channel.publish_multi(addr, msg):
+                async for chunk in response:
                     print_msg(chunk, oneline, filter)
         except asyncio.CancelledError:
             await runtime.channel.cancel(addr)

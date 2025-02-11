@@ -44,26 +44,6 @@ class LocalChannel(BaseChannel):
     async def close(self) -> None:
         pass
 
-    async def publish(
-        self,
-        addr: Address,
-        msg: RawMessage,
-        request: bool = False,
-        stream: bool = False,
-        reply: str = "",
-        timeout: float = 0.5,
-        probe: bool = True,
-    ) -> RawMessage | None:
-        return await self._publish(
-            addr,
-            msg,
-            request=request,
-            stream=stream,
-            reply=reply,
-            timeout=timeout,
-            probe=probe,
-        )
-
     async def subscribe(
         self,
         addr: Address,

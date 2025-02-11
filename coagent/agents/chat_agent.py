@@ -125,7 +125,7 @@ class Delegate:
 
     async def handle(self, msg: ChatHistory) -> AsyncIterator[ChatMessage]:
         addr = Address(name=self.agent_type, id=self.host_agent.address.id)
-        result = self.host_agent.channel.publish_multi(addr, msg.encode())
+        result = await self.host_agent.channel.publish(addr, msg.encode(), stream=True)
         full_content = ""
         async for chunk in result:
             resp = ChatMessage.decode(chunk)

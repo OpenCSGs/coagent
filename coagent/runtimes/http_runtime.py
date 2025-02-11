@@ -43,8 +43,8 @@ class HTTPRuntime(BaseRuntime):
 class HTTPChannel(BaseChannel):
     """An HTTP-based channel.
 
-    publish: POST /publish
-    publish_multi: POST /publish_multi
+    _publish: POST /publish
+    _publish_stream: POST /publish_multi
     subscribe: POST /subscribe
     new_reply_topic: POST /reply-topics
     """
@@ -64,7 +64,7 @@ class HTTPChannel(BaseChannel):
     async def close(self) -> None:
         pass
 
-    async def publish(
+    async def _publish(
         self,
         addr: Address,
         msg: RawMessage,
@@ -95,7 +95,7 @@ class HTTPChannel(BaseChannel):
         if resp.is_error:
             raise_http_error(resp, resp.text)
 
-    async def publish_multi(
+    async def _publish_stream(
         self,
         addr: Address,
         msg: RawMessage,
@@ -290,9 +290,10 @@ class HTTPChannelBackend:
         msg: RawMessage,
         probe: bool = True,
     ) -> AsyncIterator[RawMessage]:
-        msgs = self._channel.publish_multi(
+        msgs = await self._channel.publish(
             addr,
             msg,
+            stream=True,
             probe=probe,
         )
         async for msg in msgs:
