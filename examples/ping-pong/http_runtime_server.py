@@ -27,15 +27,40 @@ async def shutdown():
 
 async def publish(request):
     data: dict = await request.json()
+
+    addr: Address = Address.model_validate(data["addr"])
+    msg: RawMessage = RawMessage.model_validate(data["msg"])
+    stream: bool = data.get("stream", False)
+    request: bool = data.get("request", False)
+    reply: str = data.get("reply", "")
+    timeout: float = data.get("timeout", 0.5)
+    probe: bool = data.get("probe", True)
+
+    # Streaming
+    if stream:
+        msgs: AsyncIterator[RawMessage] = await backend.publish(
+            addr=addr, msg=msg, stream=stream, probe=probe
+        )
+
+        async def event_stream() -> AsyncIterator[str]:
+            try:
+                async for raw in msgs:
+                    yield dict(data=raw.encode_json())
+            except BaseError as exc:
+                yield dict(event="error", data=exc.encode_json())
+
+        return EventSourceResponse(event_stream())
+
+    # Non-streaming
     try:
         resp: RawMessage | None = await backend.publish(
-            addr=Address.model_validate(data["addr"]),
-            msg=RawMessage.model_validate(data["msg"]),
-            request=data.get("request", False),
-            stream=data.get("stream", False),
-            reply=data.get("reply", ""),
-            timeout=data.get("timeout", 0.5),
-            probe=data.get("probe", True),
+            addr=addr,
+            msg=msg,
+            stream=stream,
+            request=request,
+            reply=reply,
+            timeout=timeout,
+            probe=probe,
         )
     except BaseError as exc:
         return JSONResponse(exc.encode(mode="json"), status_code=404)
@@ -44,24 +69,6 @@ async def publish(request):
         return Response(status_code=204)
     else:
         return JSONResponse(resp.encode(mode="json"))
-
-
-async def publish_multi(request):
-    data: dict = await request.json()
-    msgs = backend.publish_multi(
-        addr=Address.model_validate(data["addr"]),
-        msg=RawMessage.model_validate(data["msg"]),
-        probe=data.get("probe", True),
-    )
-
-    async def event_stream() -> AsyncIterator[str]:
-        try:
-            async for raw in msgs:
-                yield dict(data=raw.encode_json())
-        except BaseError as exc:
-            yield dict(event="error", data=exc.encode_json())
-
-    return EventSourceResponse(event_stream())
 
 
 async def subscribe(request):
@@ -85,7 +92,6 @@ async def new_reply_topic(request):
 
 routes = [
     Route("/publish", publish, methods=["POST"]),
-    Route("/publish_multi", publish_multi, methods=["POST"]),
     Route("/subscribe", subscribe, methods=["POST"]),
     Route("/reply-topics", new_reply_topic, methods=["POST"]),
 ]

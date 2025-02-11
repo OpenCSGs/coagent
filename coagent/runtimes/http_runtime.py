@@ -44,7 +44,7 @@ class HTTPChannel(BaseChannel):
     """An HTTP-based channel.
 
     _publish: POST /publish
-    _publish_stream: POST /publish_multi
+    _publish_stream: POST /publish stream=True
     subscribe: POST /subscribe
     new_reply_topic: POST /reply-topics
     """
@@ -68,8 +68,8 @@ class HTTPChannel(BaseChannel):
         self,
         addr: Address,
         msg: RawMessage,
-        request: bool = False,
         stream: bool = False,
+        request: bool = False,
         reply: str = "",
         timeout: float = 5.0,
         probe: bool = True,
@@ -77,8 +77,8 @@ class HTTPChannel(BaseChannel):
         data = dict(
             addr=addr.encode(mode="json"),
             msg=msg.encode(mode="json"),
-            request=request,
             stream=stream,
+            request=request,
             reply=reply,
             timeout=timeout,
             probe=probe,
@@ -108,13 +108,14 @@ class HTTPChannel(BaseChannel):
         data = dict(
             addr=addr.encode(mode="json"),
             msg=msg.encode(mode="json"),
+            stream=True,
             probe=probe,
         )
         headers = {"Authorization": self._auth} if self._auth else None
 
         queue: QueueSubscriptionIterator = QueueSubscriptionIterator()
         sub: HTTPChannelSubscription = HTTPChannelSubscription(
-            f"{self._server}/publish_multi", data, headers, queue.receive
+            f"{self._server}/publish", data, headers, queue.receive
         )
         await sub.subscribe()
 
@@ -268,8 +269,8 @@ class HTTPChannelBackend:
         self,
         addr: Address,
         msg: RawMessage,
-        request: bool = False,
         stream: bool = False,
+        request: bool = False,
         reply: str = "",
         timeout: float = 5.0,
         probe: bool = True,
@@ -277,27 +278,12 @@ class HTTPChannelBackend:
         return await self._channel.publish(
             addr,
             msg,
-            request=request,
             stream=stream,
+            request=request,
             reply=reply,
             timeout=timeout,
             probe=probe,
         )
-
-    async def publish_multi(
-        self,
-        addr: Address,
-        msg: RawMessage,
-        probe: bool = True,
-    ) -> AsyncIterator[RawMessage]:
-        msgs = await self._channel.publish(
-            addr,
-            msg,
-            stream=True,
-            probe=probe,
-        )
-        async for msg in msgs:
-            yield msg
 
     async def subscribe(
         self,
