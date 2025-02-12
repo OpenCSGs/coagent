@@ -131,8 +131,8 @@ class BaseChannel(Channel):
         await self._publish(
             addr,
             msg,
-            request=True,
             stream=True,
+            request=True,
             reply=inbox,
             probe=probe,
         )

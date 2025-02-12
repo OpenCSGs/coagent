@@ -109,6 +109,7 @@ class HTTPChannel(BaseChannel):
             addr=addr.encode(mode="json"),
             msg=msg.encode(mode="json"),
             stream=True,
+            request=True,
             probe=probe,
         )
         headers = {"Authorization": self._auth} if self._auth else None
@@ -274,7 +275,7 @@ class HTTPChannelBackend:
         reply: str = "",
         timeout: float = 5.0,
         probe: bool = True,
-    ) -> RawMessage | None:
+    ) -> AsyncIterator[RawMessage] | RawMessage | None:
         return await self._channel.publish(
             addr,
             msg,
