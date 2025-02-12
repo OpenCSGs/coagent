@@ -85,6 +85,8 @@ class Swarm:
                 p.pop("function_call", None)
             p.pop("refusal", None)
 
+            p.pop("reasoning_content", None)  # Remove possible reasoning content.
+
         try:
             response = await self.client.acompletion(**create_params)
             async for chunk in response:
