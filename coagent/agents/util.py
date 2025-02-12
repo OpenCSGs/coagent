@@ -9,8 +9,13 @@ from .model_client import default_model_client, ModelClient
 
 
 async def chat(
-    messages: list[ChatMessage], client: ModelClient = default_model_client
-) -> ChatMessage:
+    messages: list[ChatMessage],
+    stream: bool = False,
+    client: ModelClient = default_model_client,
+) -> AsyncIterator[ChatMessage] | ChatMessage:
+    if stream:
+        return _chat_stream(messages, client)
+
     response = await client.acompletion(
         messages=[m.model_dump() for m in messages],
     )
@@ -21,7 +26,7 @@ async def chat(
     )
 
 
-async def chat_stream(
+async def _chat_stream(
     messages: list[ChatMessage], client: ModelClient = default_model_client
 ) -> AsyncIterator[ChatMessage]:
     response = await client.acompletion(

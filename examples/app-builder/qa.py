@@ -2,7 +2,7 @@ import asyncio
 from typing import AsyncIterator
 
 from coagent.agents.chat_agent import ChatMessage
-from coagent.agents.util import chat_stream
+from coagent.agents.util import chat
 from coagent.core import (
     AgentSpec,
     BaseAgent,
@@ -69,7 +69,8 @@ The corrected version of full python code.\
         ]
 
         reply = ""
-        async for chunk in chat_stream(msgs):
+        response = await chat(msgs, stream=True)
+        async for chunk in response:
             yield ChatMessage(role="assistant", content=chunk.content)
             reply += chunk.content
 
