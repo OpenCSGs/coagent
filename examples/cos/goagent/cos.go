@@ -228,11 +228,12 @@ func (a *Server) Receive(data string) {
 	slog.Info("[Server.Receive] handle result.", slog.Any("result", result))
 
 	slog.Info("[Server.Receive] reply.", slog.Any("msg.Reply", msg.Reply))
-	if len(msg.Reply) == 0 {
+	replyAddr, ok := msg.Reply["address"].(map[string]any)
+	if !ok || len(replyAddr) == 0 {
 		return
 	}
 
-	err = a.channel.Publish(msg.Reply, result)
+	err = a.channel.Publish(replyAddr, result)
 	if err != nil {
 		slog.Error("[Server.Receive] Error publishing reply.", slog.Any("err", err), slog.Any("msg.Reply", msg.Reply))
 	}

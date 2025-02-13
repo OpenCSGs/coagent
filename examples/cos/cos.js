@@ -122,22 +122,23 @@ class Agent {
 
     let result = this.handle(msg);
 
-    if (!msg.reply) {
+	const replyAddr = msg.reply? msg.reply.address : undefined;
+    if (!replyAddr) {
       return
     }
 
     if (isAsyncIterator(result)) {
       for await (let r of result) {
         console.log(`partial result: ${JSON.stringify(r)}`);
-        await this.channel.publish(msg.reply, r);
+        await this.channel.publish(replyAddr, r);
       }
       // End of the iteration, send an extra StopIteration message.
       const stop = {header: {type: 'StopIteration'}}
-      await this.channel.publish(msg.reply, stop);
+      await this.channel.publish(replyAddr, stop);
     } else {
       result = await result;
       console.log(`result: ${JSON.stringify(result)}`);
-      await this.channel.publish(msg.reply, result);
+      await this.channel.publish(replyAddr, result);
     }
   }
 }

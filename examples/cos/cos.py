@@ -111,19 +111,20 @@ class Agent(abc.ABC):
 
         result = self.handle(msg)
 
-        reply = msg.get("reply")
-        if not reply:
+        reply = msg.get("reply") or {}
+        reply_addr = reply.get("address")
+        if not reply_addr:
             return
 
         if is_async_iterator(result):
             async for x in result:
-                await self.channel.publish(reply, x)
+                await self.channel.publish(reply_addr, x)
             # End of the iteration, send an extra StopIteration message.
             stop = {"header": {"type": "StopIteration"}}
-            await self.channel.publish(reply, stop)
+            await self.channel.publish(reply_addr, stop)
         else:
             x = await result
-            await self.channel.publish(reply, x)
+            await self.channel.publish(reply_addr, x)
 
     @abc.abstractmethod
     async def handle(self, msg: dict) -> Any:
