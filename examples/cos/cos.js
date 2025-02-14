@@ -122,7 +122,7 @@ class Agent {
 
     let result = this.handle(msg);
 
-	const replyAddr = msg.reply? msg.reply.address : undefined;
+    const replyAddr = msg.reply? msg.reply.address : undefined;
     if (!replyAddr) {
       return
     }

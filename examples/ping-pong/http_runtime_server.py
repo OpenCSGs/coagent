@@ -2,6 +2,7 @@ import os  # noqa: F401
 from typing import AsyncIterator
 
 from starlette.applications import Starlette
+from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 from starlette.routing import Route
 from sse_starlette.sse import EventSourceResponse
@@ -25,13 +26,13 @@ async def shutdown():
     await backend.stop()
 
 
-async def publish(request):
+async def publish(request: Request):
     data: dict = await request.json()
 
     addr: Address = Address.model_validate(data["addr"])
     msg: RawMessage = RawMessage.model_validate(data["msg"])
     stream: bool = data.get("stream", False)
-    request: bool = data.get("request", False)
+    _request: bool = data.get("request", False)
     reply: str = data.get("reply", "")
     timeout: float = data.get("timeout", 0.5)
     probe: bool = data.get("probe", True)
@@ -57,7 +58,7 @@ async def publish(request):
             addr=addr,
             msg=msg,
             stream=stream,
-            request=request,
+            request=_request,
             reply=reply,
             timeout=timeout,
             probe=probe,
@@ -71,7 +72,7 @@ async def publish(request):
         return JSONResponse(resp.encode(mode="json"))
 
 
-async def subscribe(request):
+async def subscribe(request: Request):
     data: dict = await request.json()
     msgs: AsyncIterator[RawMessage] = backend.subscribe(
         addr=Address.model_validate(data["addr"]),
@@ -85,7 +86,7 @@ async def subscribe(request):
     return EventSourceResponse(event_stream())
 
 
-async def new_reply_topic(request):
+async def new_reply_topic(request: Request):
     topic = await backend.new_reply_topic()
     return JSONResponse(dict(reply_topic=topic))
 
