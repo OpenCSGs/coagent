@@ -31,6 +31,7 @@ loguru = "0.7.3"
 jq = "1.8.0"
 litellm = "1.60.4"
 mcp = "1.2.0"
+jinja2 = "3.1.5"
 
 [tool.pyright]
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
