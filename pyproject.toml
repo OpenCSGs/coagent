@@ -1,3 +1,12 @@
+[project]
+name = "coagent-python"
+version = "0.0.1"
+description = "An open-source framework for building monolithic or distributed agentic systems, ranging from simple LLM calls to compositional workflows and autonomous agents."
+authors = [
+    { name = "RussellLuo", email = "luopeng.he@gmail.com" },
+]
+requires-python = ">=3.10"
+
 [tool.poetry]
 name = "coagent-python"
 version = "0.0.1"
