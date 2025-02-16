@@ -78,6 +78,7 @@ jobs:
       - uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
+          python-version: ${{ matrix.python-version }}
 
       - name: check GITHUB_REF matches package version
         uses: samuelcolvin/check-python-version@v4.1
@@ -88,6 +89,9 @@ jobs:
         uses: snok/install-poetry@v1
         with:
           version: 1.8.2
+
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
 
       - name: Build release distributions
         run: poetry build
