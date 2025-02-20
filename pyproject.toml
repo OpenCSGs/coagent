@@ -1,19 +1,24 @@
 [project]
-name = "coagent"
+name = "coagent-python"
 version = "0.0.1"
-description = ""
+description = "An open-source framework for building monolithic or distributed agentic systems, ranging from simple LLM calls to compositional workflows and autonomous agents."
 authors = [
-    { name = "Your Name", email = "you@example.com" },
+    { name = "RussellLuo", email = "luopeng.he@gmail.com" },
 ]
 requires-python = ">=3.10"
 
 [tool.poetry]
-name = "coagent"
+name = "coagent-python"
 version = "0.0.1"
-description = ""
+description = "An open-source framework for building monolithic or distributed agentic systems, ranging from simple LLM calls to compositional workflows and autonomous agents."
 authors = [
-    "Your Name <you@example.com>",
+    "RussellLuo <luopeng.he@gmail.com>",
 ]
+packages = [
+    { include = "coagent" }
+]
+readme = "README.md"
+repository = "https://github.com/OpenCSGs/coagent"
 
 [tool.poetry.dependencies]
 python = ">=3.10.0,<3.14"
