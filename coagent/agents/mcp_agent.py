@@ -25,8 +25,9 @@ class MCPAgent(ChatAgent):
 
     def __init__(
         self,
-        system: Prompt | None = None,
+        system: Prompt | str = "",
         mcp_server_base_url: str = "",
+        selected_tools: list[str] | None = None,
         client: ModelClient = default_model_client,
     ) -> None:
         super().__init__(system="", client=client)
@@ -36,7 +37,9 @@ class MCPAgent(ChatAgent):
         self._mcp_client_session: ClientSession | None = None
 
         self._mcp_swarm_agent: SwarmAgent | None = None
-        self._mcp_system_prompt_config: Prompt | None = system
+        self._mcp_system_prompt_config: Prompt | str = system
+        # The selected tools to use. If None, all available tools will be used.
+        self._mcp_selected_tools: list[str] | None = selected_tools
 
     @property
     def mcp_server_base_url(self) -> str:
@@ -95,9 +98,10 @@ class MCPAgent(ChatAgent):
             )
         return self._mcp_swarm_agent
 
-    async def _get_prompt(self, prompt_config: Prompt | None) -> str:
-        if not prompt_config:
-            return ""
+    async def _get_prompt(self, prompt_config: Prompt | str) -> str:
+        if isinstance(prompt_config, str):
+            # The system prompt is a string, just return it as is.
+            return prompt_config
 
         try:
             prompt = await self._mcp_client_session.get_prompt(
@@ -115,7 +119,14 @@ class MCPAgent(ChatAgent):
 
     async def _get_tools(self) -> list[Callable]:
         result = await self._mcp_client_session.list_tools()
-        tools = [self._make_tool(t) for t in result.tools]
+
+        def filter_tool(t: Tool) -> bool:
+            if self._mcp_selected_tools is None:
+                return True
+            return t.name in self._mcp_selected_tools
+
+        tools = [self._make_tool(t) for t in result.tools if filter_tool(t)]
+
         return tools
 
     def _make_tool(self, t: Tool) -> Callable:
