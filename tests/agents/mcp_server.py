@@ -15,5 +15,11 @@ def query_weather(city: str) -> str:
     return f"The weather in {city} is sunny."
 
 
+@mcp.tool()
+def book_flight(departure: str, arrival: str) -> str:
+    """Book a flight from departure to arrival."""
+    return f"Flight from {departure} to {arrival} has been booked."
+
+
 if __name__ == "__main__":
     mcp.run()
