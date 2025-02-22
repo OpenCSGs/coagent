@@ -21,25 +21,28 @@ class Prompt:
 
 
 class MCPAgent(ChatAgent):
-    """An agent that can use tools provided by MCP (Model Context Protocol) servers."""
+    """An agent that can use prompts and tools provided by MCP (Model Context Protocol) servers."""
 
     def __init__(
         self,
-        system: Prompt | str = "",
         mcp_server_base_url: str = "",
-        selected_tools: list[str] | None = None,
+        mcp_server_headers: dict[str, Any] | None = None,
+        system: Prompt | str = "",
+        tools: list[str] | None = None,
         client: ModelClient = default_model_client,
     ) -> None:
         super().__init__(system="", client=client)
 
         self._mcp_server_base_url: str = mcp_server_base_url
+        self._mcp_server_headers: dict[str, Any] | None = mcp_server_headers
+
         self._mcp_client_transport: AsyncContextManager[tuple] | None = None
         self._mcp_client_session: ClientSession | None = None
 
         self._mcp_swarm_agent: SwarmAgent | None = None
         self._mcp_system_prompt_config: Prompt | str = system
         # The selected tools to use. If None, all available tools will be used.
-        self._mcp_selected_tools: list[str] | None = selected_tools
+        self._mcp_selected_tools: list[str] | None = tools
 
     @property
     def mcp_server_base_url(self) -> str:
@@ -47,10 +50,24 @@ class MCPAgent(ChatAgent):
             raise ValueError("MCP server base URL is empty")
         return self._mcp_server_base_url
 
+    @property
+    def mcp_server_headers(self) -> dict[str, Any] | None:
+        return self._mcp_server_headers
+
+    @property
+    def system(self) -> Prompt | str:
+        """Note that this property is different from the `system` property in ChatAgent."""
+        return self._mcp_system_prompt_config
+
+    @property
+    def tools(self) -> list[str] | None:
+        """Note that this property is different from the `tools` property in ChatAgent."""
+        return self._mcp_selected_tools
+
     def _make_mcp_client_transport(self) -> AsyncContextManager[tuple]:
         if self.mcp_server_base_url.startswith(("http://", "https://")):
             url = urljoin(self.mcp_server_base_url, "sse")
-            return sse_client(url=url)
+            return sse_client(url=url, headers=self.mcp_server_headers)
         else:
             # Mainly for testing purposes.
             command, arg = self.mcp_server_base_url.split(" ", 1)
@@ -88,8 +105,8 @@ class MCPAgent(ChatAgent):
 
     async def get_swarm_agent(self) -> SwarmAgent:
         if not self._mcp_swarm_agent:
-            system = await self._get_prompt(self._mcp_system_prompt_config)
-            tools = await self._get_tools()
+            system = await self._get_prompt(self.system)
+            tools = await self._get_tools(self.tools)
             self._mcp_swarm_agent = SwarmAgent(
                 name=self.name,
                 model=self.client.model,
@@ -117,13 +134,13 @@ class MCPAgent(ChatAgent):
             case _:  # ImageContent() or EmbeddedResource() or other types
                 return ""
 
-    async def _get_tools(self) -> list[Callable]:
+    async def _get_tools(self, selected_tools: list[str] | None) -> list[Callable]:
         result = await self._mcp_client_session.list_tools()
 
         def filter_tool(t: Tool) -> bool:
-            if self._mcp_selected_tools is None:
+            if selected_tools is None:
                 return True
-            return t.name in self._mcp_selected_tools
+            return t.name in selected_tools
 
         tools = [self._make_tool(t) for t in result.tools if filter_tool(t)]
 

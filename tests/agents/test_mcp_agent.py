@@ -37,7 +37,7 @@ class TestMCPAgent:
         agent = MCPAgent(mcp_server_base_url="python tests/agents/mcp_server.py")
         await agent.started()
 
-        tools = await agent._get_tools()
+        tools = await agent._get_tools(None)
         assert len(tools) == 2
 
         # Get query_weather
@@ -99,13 +99,14 @@ class TestMCPAgent:
     @pytest.mark.skipif(sys.platform == "win32", reason="Does not run on Windows.")
     @pytest.mark.asyncio
     async def test_get_tools_with_selection(self):
+        selected_tools = ["query_weather"]
         agent = MCPAgent(
             mcp_server_base_url="python tests/agents/mcp_server.py",
-            selected_tools=["query_weather"],
+            tools=selected_tools,
         )
         await agent.started()
 
-        tools = await agent._get_tools()
+        tools = await agent._get_tools(selected_tools)
         assert len(tools) == 1
 
         tool = tools[0]

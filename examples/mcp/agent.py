@@ -10,8 +10,8 @@ mcp = AgentSpec(
     "mcp",
     new(
         MCPAgent,
-        system=Prompt(name="system_prompt", arguments={"role": "Weather Reporter"}),
         mcp_server_base_url="http://localhost:8080",
+        system=Prompt(name="system_prompt", arguments={"role": "Weather Reporter"}),
     ),
 )
 
