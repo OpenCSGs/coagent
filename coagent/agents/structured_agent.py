@@ -65,7 +65,9 @@ class StructuredAgent(ChatAgent):
         _input = self._input_type.decode(msg.raw)
 
         # This is a hack to make the system prompt dynamic.
-        self._swarm_agent.instructions = await self.render_system(_input)
+        swarm_agent = await self.get_swarm_agent()
+        swarm_agent.instructions = await self.render_system(_input)
+
         messages = await self.render_messages(_input)
 
         history = ChatHistory(messages=messages)
