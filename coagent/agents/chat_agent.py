@@ -183,24 +183,13 @@ class ChatAgent(BaseAgent):
     ):
         super().__init__()
 
-        self._name = name
-        self._system = system
-        self._client = client
+        self._name: str = name
+        self._system: str = system
+        self._tools: list[Callable] = tools or []
+        self._client: ModelClient = client
 
-        tools = tools or []
-        methods = inspect.getmembers(self, predicate=inspect.ismethod)
-        for _name, meth in methods:
-            if getattr(meth, "is_tool", False):
-                tools.append(meth)
-
-        self._swarm_client = Swarm(self.client)
-
-        self._swarm_agent = SwarmAgent(
-            name=self.name,
-            model=self.client.model,
-            instructions=self.system,
-            functions=[wrap_error(t) for t in tools],
-        )
+        self._swarm_client: Swarm = Swarm(self.client)
+        self._swarm_agent: SwarmAgent | None = None
 
         self._history: ChatHistory = ChatHistory(messages=[])
 
@@ -218,10 +207,27 @@ class ChatAgent(BaseAgent):
         return self._system
 
     @property
+    def tools(self) -> list[Callable]:
+        return self._tools
+
+    @property
     def client(self) -> ModelClient:
         return self._client
 
     async def get_swarm_agent(self) -> SwarmAgent:
+        if not self._swarm_agent:
+            tools = self.tools[:]  # copy
+            methods = inspect.getmembers(self, predicate=inspect.ismethod)
+            for _name, meth in methods:
+                if getattr(meth, "is_tool", False):
+                    tools.append(meth)
+
+            self._swarm_agent = SwarmAgent(
+                name=self.name,
+                model=self.client.model,
+                instructions=self.system,
+                functions=[wrap_error(t) for t in tools],
+            )
         return self._swarm_agent
 
     async def agent(self, agent_type: str) -> AsyncIterator[ChatMessage]:
