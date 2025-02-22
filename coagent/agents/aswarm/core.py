@@ -180,19 +180,30 @@ class Swarm:
             function_result = func(**args)
 
             if is_async_iterator(function_result):
-                # NOTE(luopeng)
+                # NOTE(luopeng):
                 #
-                # If the function returns an async iterator, we assume that
-                # the function is actually a sub-agent, then we should return
-                # the stream directly to the user.
+                # The function is an async generator function. We assume that
+                # it's better to return the stream directly to the user.
                 #
                 # Note that this only works if there's one tool call in the batch.
                 async for chunk in function_result:
                     yield normalize_function_result(chunk)
                 return
 
+            function_result_after_await = await function_result
+            if is_async_iterator(function_result_after_await):
+                # NOTE(luopeng):
+                #
+                # The function returns an async iterator internally. We assume
+                # that it's better to return the stream directly to the user.
+                #
+                # Note that this only works if there's one tool call in the batch.
+                async for chunk in function_result_after_await:
+                    yield normalize_function_result(chunk)
+                return
+
             # Non-streaming results are handled here.
-            raw_result = normalize_function_result(await function_result)
+            raw_result = normalize_function_result(function_result_after_await)
             if raw_result.to_user:
                 # Return the reply directly to the user.
                 yield raw_result

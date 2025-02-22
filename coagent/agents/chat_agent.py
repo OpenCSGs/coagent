@@ -7,6 +7,7 @@ import re
 from typing import Any, AsyncIterator, Callable
 
 from coagent.core import Address, BaseAgent, Context, handler, logger
+from coagent.core.agent import is_async_iterator
 from pydantic_core import PydanticUndefined
 from pydantic.fields import FieldInfo
 
@@ -44,7 +45,9 @@ def confirm(template: str):
 
     def wrapper(func):
         @functools.wraps(func)
-        async def run(*args: Any, **kwargs: Any) -> ChatMessage | str:
+        async def run(
+            *args: Any, **kwargs: Any
+        ) -> AsyncIterator[ChatMessage | str] | ChatMessage | str:
             # Ask the user to confirm if not yet.
             ctx = kwargs.get("ctx", None)
             if ctx and not RunContext(ctx).user_confirmed:
@@ -58,9 +61,11 @@ def confirm(template: str):
                     to_user=True,
                 )
 
-            # Note that we assume that the tool is not an async generator,
-            # so we always use `await` here.
-            return await func(*args, **kwargs)
+            result = func(*args, **kwargs)
+            if is_async_iterator(result):
+                return result
+            else:
+                return await result
 
         return run
 
@@ -88,7 +93,9 @@ Please fill in the input form below:
 
     def wrapper(func):
         @functools.wraps(func)
-        async def run(*args: Any, **kwargs: Any) -> ChatMessage | str:
+        async def run(
+            *args: Any, **kwargs: Any
+        ) -> AsyncIterator[ChatMessage | str] | ChatMessage | str:
             # Ask the user to fill in the input form if not yet.
             ctx = kwargs.get("ctx", None)
             if ctx and not RunContext(ctx).user_submitted:
@@ -107,9 +114,11 @@ Please fill in the input form below:
                     to_user=True,
                 )
 
-            # Note that we assume that the tool is not an async generator,
-            # so we always use `await` here.
-            return await func(*args, **kwargs)
+            result = func(*args, **kwargs)
+            if is_async_iterator(result):
+                return result
+            else:
+                return await result
 
         return run
 
@@ -148,7 +157,9 @@ def wrap_error(func):
     """Decorator to capture and return the possible error when running the given tool."""
 
     @functools.wraps(func)
-    async def run(*args: Any, **kwargs: Any) -> ChatMessage | str:
+    async def run(
+        *args: Any, **kwargs: Any
+    ) -> AsyncIterator[ChatMessage | str] | ChatMessage | str:
         try:
             # Fill in the missing arguments with default values if possible.
             #
@@ -163,9 +174,12 @@ def wrap_error(func):
                     else:
                         kwargs[name] = default
 
-            # Note that we assume that the tool is not an async generator,
-            # so we always use `await` here.
-            return await func(*args, **kwargs)
+            result = func(*args, **kwargs)
+            if is_async_iterator(result):
+                return result
+            else:
+                return await result
+
         except Exception as exc:
             logger.exception(exc)
             return f"Error: {exc}"
