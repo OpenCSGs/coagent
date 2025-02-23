@@ -1,7 +1,6 @@
+from datetime import datetime
 import inspect
 import typing
-from datetime import datetime
-from typing import Any
 
 from pydantic import Field, create_model
 from pydantic.fields import FieldInfo
@@ -237,7 +236,7 @@ def handoff(triage_agent, *agents, transfer_back: bool = True):
             agent.functions.append(transfer_back_to_triage)
 
 
-def normalize_function_result(result: Any) -> ChatMessage:
+def normalize_function_result(result: typing.Any) -> ChatMessage:
     if isinstance(result, ChatMessage):
         return result
     return ChatMessage(role="assistant", content=str(result))

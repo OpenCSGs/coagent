@@ -56,7 +56,10 @@ def test_function_to_jsonschema_normal():
 
 
 def test_function_to_jsonschema_annotated():
-    def func(a: Annotated[int, "Param a"], b: Annotated[str, "Param b"] = "ok") -> None:
+    def func(
+        a: Annotated[int, "The description for parameter a"],
+        b: Annotated[str, "The description for parameter b"] = "ok",
+    ) -> None:
         """This is a test function."""
         pass
 
@@ -67,10 +70,14 @@ def test_function_to_jsonschema_annotated():
             "name": "func",
             "parameters": {
                 "properties": {
-                    "a": {"description": "Param a", "title": "A", "type": "integer"},
+                    "a": {
+                        "description": "The description for parameter a",
+                        "title": "A",
+                        "type": "integer",
+                    },
                     "b": {
                         "default": "ok",
-                        "description": "Param b",
+                        "description": "The description for parameter b",
                         "title": "B",
                         "type": "string",
                     },
@@ -86,8 +93,8 @@ def test_function_to_jsonschema_annotated():
 
 def test_function_to_jsonschema_pydantic_field():
     def func(
-        a: int = Field(description="Param a"),
-        b: str = Field(default="ok", description="Param b"),
+        a: int = Field(description="The description for parameter a"),
+        b: str = Field(default="ok", description="The description for parameter b"),
     ) -> None:
         """This is a test function."""
         pass
@@ -99,10 +106,14 @@ def test_function_to_jsonschema_pydantic_field():
             "name": "func",
             "parameters": {
                 "properties": {
-                    "a": {"description": "Param a", "title": "A", "type": "integer"},
+                    "a": {
+                        "description": "The description for parameter a",
+                        "title": "A",
+                        "type": "integer",
+                    },
                     "b": {
                         "default": "ok",
-                        "description": "Param b",
+                        "description": "The description for parameter b",
                         "title": "B",
                         "type": "string",
                     },
