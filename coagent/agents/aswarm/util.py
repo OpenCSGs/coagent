@@ -1,4 +1,5 @@
 import inspect
+import typing
 from datetime import datetime
 from typing import Any
 
@@ -172,15 +173,34 @@ def function_to_jsonschema(func) -> dict:
         # Determine the default value
         default = param.default
 
-        # Check if the parameter has a Field with description
-        if isinstance(param.default, FieldInfo):
-            field = param.default
-            fields[param_name] = (annotation, field)
-        elif param.default != inspect.Parameter.empty:
-            fields[param_name] = (annotation, param.default)
+        # Determine the field information.
+        if isinstance(default, FieldInfo):
+            # The default value is already a Field.
+            typ = annotation
+            field = default
+        elif default != inspect.Parameter.empty:
+            # Normal default value
+            if typing.get_origin(annotation) == typing.Annotated:
+                # The parameter is annotated with metadata.
+                typ, description = typing.get_args(annotation)[:2]
+                field = Field(default=default, description=str(description))
+            else:
+                # No metadata, use Field without description.
+                typ = annotation
+                field = Field(default=default)
         else:
-            # If no default value, use Field without default
-            fields[param_name] = (annotation, Field(...))
+            # No default value
+            if typing.get_origin(annotation) == typing.Annotated:
+                # The parameter is annotated with metadata.
+                # Always treat the first metadata element as the description.
+                typ, description = typing.get_args(annotation)[:2]
+                field = Field(..., description=str(description))
+            else:
+                # No default value and no metadata, use Field without default.
+                typ = annotation
+                field = Field(...)
+
+        fields[param_name] = (typ, field)
 
     # 3. Create the Pydantic model
     model_name = f"{func.__name__}"
