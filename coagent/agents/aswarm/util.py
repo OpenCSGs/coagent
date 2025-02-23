@@ -134,10 +134,7 @@ def function_to_jsonschema(func) -> dict:
     if hasattr(func, "__mcp_tool_schema__"):
         # If the function already has a schema, return it.
         # This is the case for tools used in MCPAgent.
-        return dict(
-            type="function",
-            function=func.__mcp_tool_schema__
-        )
+        return dict(type="function", function=func.__mcp_tool_schema__)
 
     # Construct the pydantic mdoel for the _under_fn's function signature parameters.
     # 1. Get the function signature.
@@ -181,8 +178,9 @@ def function_to_jsonschema(func) -> dict:
             # Normal default value
             if typing.get_origin(annotation) == typing.Annotated:
                 # The parameter is annotated with metadata.
-                typ, description = typing.get_args(annotation)[:2]
-                field = Field(default=default, description=str(description))
+                typ, field = get_type_and_field_from_annotated(
+                    annotation, default=default
+                )
             else:
                 # No metadata, use Field without description.
                 typ = annotation
@@ -192,8 +190,7 @@ def function_to_jsonschema(func) -> dict:
             if typing.get_origin(annotation) == typing.Annotated:
                 # The parameter is annotated with metadata.
                 # Always treat the first metadata element as the description.
-                typ, description = typing.get_args(annotation)[:2]
-                field = Field(..., description=str(description))
+                typ, field = get_type_and_field_from_annotated(annotation)
             else:
                 # No default value and no metadata, use Field without default.
                 typ = annotation
@@ -212,6 +209,25 @@ def function_to_jsonschema(func) -> dict:
             parameters=ParamsModel.model_json_schema(),
         ),
     )
+
+
+def get_type_and_field_from_annotated(
+    annotation: typing.Any,
+    default: typing.Any | None = None,
+) -> tuple[typing.Type, Field]:
+    # Any additional metadata except the first one is ignored.
+    typ, metadata = typing.get_args(annotation)[:2]
+    match metadata:
+        case FieldInfo():
+            description = metadata.description
+        case _:
+            # Always treat the metadata as a string.
+            description = str(metadata)
+    if default is None:
+        field = Field(..., description=description)
+    else:
+        field = Field(default=default, description=description)
+    return typ, field
 
 
 def handoff(triage_agent, *agents, transfer_back: bool = True):
