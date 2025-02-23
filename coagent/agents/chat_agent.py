@@ -167,12 +167,16 @@ def wrap_error(func):
             # but excepts possible `self`) are keyword arguments.
             sig = inspect.signature(func)
             for name, param in sig.parameters.items():
-                if name not in kwargs and isinstance(param.default, FieldInfo):
-                    default = param.default.default
-                    if default is PydanticUndefined:
-                        raise ValueError(f"Missing required argument {name!r}")
-                    else:
+                if name not in kwargs:
+                    if isinstance(param.default, FieldInfo):
+                        # The default value is a Pydantic Field.
+                        default = param.default.default
+                        if default is PydanticUndefined:
+                            raise ValueError(f"Missing required argument {name!r}")
                         kwargs[name] = default
+                    elif param.default != inspect.Parameter.empty:
+                        # Normal default value.
+                        kwargs[name] = param.default
 
             result = func(*args, **kwargs)
             if is_async_iterator(result):
