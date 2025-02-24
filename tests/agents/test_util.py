@@ -32,7 +32,7 @@ async def test_chat_stream(mock_model_client):
 
 
 def test_function_to_jsonschema_no_description():
-    def func(a: int, b: str = "ok", c: float = None) -> None:
+    def func(a: int, b: str = "ok", c: str = None) -> None:
         """This is a test function."""
         pass
 
@@ -45,7 +45,7 @@ def test_function_to_jsonschema_no_description():
                 "properties": {
                     "a": {"title": "A", "type": "integer"},
                     "b": {"default": "ok", "title": "B", "type": "string"},
-                    "c": {"default": None, "title": "C", "type": "number"},
+                    "c": {"default": None, "title": "C", "type": "string"},
                 },
                 "required": ["a"],
                 "title": "func",
@@ -60,7 +60,7 @@ def test_function_to_jsonschema_annotated_with_string():
     def func(
         a: Annotated[int, "The description for parameter a"],
         b: Annotated[str, "The description for parameter b"] = "ok",
-        c: Annotated[float, "The description for parameter c"] = None,
+        c: Annotated[str, "The description for parameter c"] = None,
     ) -> None:
         """This is a test function."""
         pass
@@ -87,7 +87,7 @@ def test_function_to_jsonschema_annotated_with_string():
                         "default": None,
                         "description": "The description for parameter c",
                         "title": "C",
-                        "type": "number",
+                        "type": "string",
                     },
                 },
                 "required": ["a"],
@@ -103,9 +103,7 @@ def test_function_to_jsonschema_annotated_with_pydantic_field():
     def func(
         a: Annotated[int, Field(description="The description for parameter a")],
         b: Annotated[str, Field(description="The description for parameter b")] = "ok",
-        c: Annotated[
-            float, Field(description="The description for parameter c")
-        ] = None,
+        c: Annotated[str, Field(description="The description for parameter c")] = None,
     ) -> None:
         """This is a test function."""
         pass
@@ -132,7 +130,7 @@ def test_function_to_jsonschema_annotated_with_pydantic_field():
                         "default": None,
                         "description": "The description for parameter c",
                         "title": "C",
-                        "type": "number",
+                        "type": "string",
                     },
                 },
                 "required": ["a"],
@@ -148,6 +146,7 @@ def test_function_to_jsonschema_default_to_pydantic_field():
     def func(
         a: int = Field(description="The description for parameter a"),
         b: str = Field(default="ok", description="The description for parameter b"),
+        c: str = Field(default=None, description="The description for parameter c"),
     ) -> None:
         """This is a test function."""
         pass
@@ -168,6 +167,12 @@ def test_function_to_jsonschema_default_to_pydantic_field():
                         "default": "ok",
                         "description": "The description for parameter b",
                         "title": "B",
+                        "type": "string",
+                    },
+                    "c": {
+                        "default": None,
+                        "description": "The description for parameter c",
+                        "title": "C",
                         "type": "string",
                     },
                 },
