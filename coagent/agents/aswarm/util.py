@@ -174,7 +174,7 @@ def function_to_jsonschema(func) -> dict:
             # The default value is already a Field.
             typ = annotation
             field = default
-        elif default != inspect.Parameter.empty:
+        elif default is not inspect.Parameter.empty:
             # Normal default value
             if typing.get_origin(annotation) == typing.Annotated:
                 # The parameter is annotated with metadata.
@@ -213,7 +213,7 @@ def function_to_jsonschema(func) -> dict:
 
 def get_type_and_field_from_annotated(
     annotation: typing.Any,
-    default: typing.Any | None = None,
+    default: typing.Any = inspect.Parameter.empty,
 ) -> tuple[typing.Type, Field]:
     # Any additional metadata except the first one is ignored.
     typ, metadata = typing.get_args(annotation)[:2]
@@ -223,7 +223,7 @@ def get_type_and_field_from_annotated(
         case _:
             # Always treat the metadata as a string.
             description = str(metadata)
-    if default is None:
+    if default is inspect.Parameter.empty:
         field = Field(..., description=description)
     else:
         field = Field(default=default, description=description)
