@@ -156,6 +156,16 @@ def tool(func):
 def wrap_error(func):
     """Decorator to capture and return the possible error when running the given tool."""
 
+    async def __wrap_aiter(
+        aiter_: AsyncIterator[ChatMessage | str],
+    ) -> AsyncIterator[ChatMessage | str]:
+        try:
+            async for chunk in aiter_:
+                yield chunk
+        except Exception as exc:
+            logger.exception(exc)
+            yield f"Error: {exc}"
+
     @functools.wraps(func)
     async def run(
         *args: Any, **kwargs: Any
@@ -180,7 +190,7 @@ def wrap_error(func):
 
             result = func(*args, **kwargs)
             if is_async_iterator(result):
-                return result
+                return __wrap_aiter(result)
             else:
                 return await result
 
