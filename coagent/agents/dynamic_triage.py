@@ -82,6 +82,24 @@ class DynamicTriage(BaseAgent):
     def client(self) -> ModelClient:
         return self._client
 
+    def get_swarm_client(self, extensions: dict) -> Swarm:
+        """Get the swarm client with the given message extensions.
+
+        Override this method to customize the swarm client.
+        """
+        model_id = extensions.get("model_id", "")
+        if model_id:
+            # We assume that non-empty model ID indicates the use of a dynamic model client.
+            client = ModelClient(
+                model=model_id,
+                api_base=extensions.get("model_api_base", ""),
+                api_key=extensions.get("model_api_key", ""),
+                api_version=extensions.get("model_api_version", ""),
+            )
+            return Swarm(client)
+
+        return self._swarm_client
+
     async def _update_swarm_agent(self) -> None:
         agent_names = list(self._sub_agents.keys())
         logger.debug(
@@ -175,7 +193,8 @@ class DynamicTriage(BaseAgent):
         # For now, we assume that the agent is processing messages sequentially.
         self._history: ChatHistory = msg
 
-        response = self._swarm_client.run_and_stream(
+        swarm_client = self.get_swarm_client(msg.extensions)
+        response = swarm_client.run_and_stream(
             agent=self._swarm_agent,
             messages=[m.model_dump() for m in msg.messages],
             context_variables=msg.extensions,

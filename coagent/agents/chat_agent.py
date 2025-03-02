@@ -242,6 +242,24 @@ class ChatAgent(BaseAgent):
     def client(self) -> ModelClient:
         return self._client
 
+    def get_swarm_client(self, extensions: dict) -> Swarm:
+        """Get the swarm client with the given message extensions.
+
+        Override this method to customize the swarm client.
+        """
+        model_id = extensions.get("model_id", "")
+        if model_id:
+            # We assume that non-empty model ID indicates the use of a dynamic model client.
+            client = ModelClient(
+                model=model_id,
+                api_base=extensions.get("model_api_base", ""),
+                api_key=extensions.get("model_api_key", ""),
+                api_version=extensions.get("model_api_version", ""),
+            )
+            return Swarm(client)
+
+        return self._swarm_client
+
     async def get_swarm_agent(self) -> SwarmAgent:
         if not self._swarm_agent:
             tools = self.tools[:]  # copy
@@ -306,9 +324,10 @@ class ChatAgent(BaseAgent):
         await self.update_user_confirmed(msg)
         await self.update_user_submitted(msg)
 
+        swarm_client = self.get_swarm_client(msg.extensions)
         swarm_agent = await self.get_swarm_agent()
 
-        response = self._swarm_client.run_and_stream(
+        response = swarm_client.run_and_stream(
             agent=swarm_agent,
             messages=[m.model_dump() for m in msg.messages],
             response_format=response_format,
