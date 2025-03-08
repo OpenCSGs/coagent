@@ -252,7 +252,7 @@ class ChatAgent(BaseAgent):
             # We assume that non-empty model ID indicates the use of a dynamic model client.
             client = ModelClient(
                 model=model_id,
-                api_base=extensions.get("model_api_base", ""),
+                base_url=extensions.get("model_base_url", ""),
                 api_key=extensions.get("model_api_key", ""),
                 api_version=extensions.get("model_api_version", ""),
             )

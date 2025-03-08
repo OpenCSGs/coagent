@@ -13,8 +13,8 @@ from coagent.core import AgentSpec, new, set_stderr_logger
 from coagent.runtimes import LocalRuntime
 
 client = ModelClient(
-    model=os.getenv("MODEL_NAME"),
-    api_base=os.getenv("MODEL_API_BASE"),
+    model=os.getenv("MODEL_ID"),
+    base_url=os.getenv("MODEL_BASE_URL"),
     api_version=os.getenv("MODEL_API_VERSION"),
     api_key=os.getenv("MODEL_API_KEY"),
 )

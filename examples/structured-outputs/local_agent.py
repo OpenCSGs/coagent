@@ -18,7 +18,7 @@ class FriendList(BaseModel):
 
 client = ModelClient(
     model="openai/llama3.1",
-    api_base="http://localhost:11434/v1",
+    base_url="http://localhost:11434/v1",
     api_key="ollama",
 )
 

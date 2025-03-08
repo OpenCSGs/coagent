@@ -8,7 +8,7 @@ from coagent.runtimes import LocalRuntime
 
 client = ModelClient(
     model="openai/deepseek-reasoner",
-    api_base="https://api.deepseek.com/v1",
+    base_url="https://api.deepseek.com/v1",
     api_key=os.getenv("DEEPSEEK_API_KEY"),
 )
 

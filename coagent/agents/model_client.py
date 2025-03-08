@@ -13,8 +13,8 @@ from pydantic import BaseModel, Field
 
 class ModelClient(BaseModel):
     provider: str = Field("", description="The model provider.")
-    model: str = Field(..., description="The model name.")
-    api_base: str = Field("", description="The API base URL.")
+    model: str = Field(..., description="The model ID.")
+    base_url: str = Field("", description="The base URL.")
     api_version: str = Field("", description="The API version.")
     api_key: str = Field("", description="The API key.")
 
@@ -27,7 +27,7 @@ class ModelClient(BaseModel):
 
         _, provider, _, _ = litellm.get_llm_provider(
             self.model,
-            api_base=self.api_base or None,
+            api_base=self.base_url or None,
         )
         return provider
 
@@ -52,7 +52,7 @@ class ModelClient(BaseModel):
             temperature=temperature,
             tools=tools,
             tool_choice=tool_choice,
-            api_base=self.api_base,
+            api_base=self.base_url,
             api_version=self.api_version,
             api_key=self.api_key,
             response_format=response_format,
@@ -62,8 +62,8 @@ class ModelClient(BaseModel):
 
 
 default_model_client = ModelClient(
-    model=os.getenv("AZURE_MODEL", ""),
-    api_base=os.getenv("AZURE_API_BASE", ""),
-    api_version=os.getenv("AZURE_API_VERSION", ""),
-    api_key=os.getenv("AZURE_API_KEY", ""),
+    model=os.getenv("MODEL_ID", ""),
+    base_url=os.getenv("MODEL_BASE_URL", ""),
+    api_version=os.getenv("MODEL_API_VERSION", ""),
+    api_key=os.getenv("MODEL_API_KEY", ""),
 )

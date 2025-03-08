@@ -19,10 +19,10 @@ from autogen_ext.models import AzureOpenAIChatCompletionClient
 
 
 az_model_client = AzureOpenAIChatCompletionClient(
-    model=os.getenv("AZURE_MODEL"),
-    azure_endpoint=os.getenv("AZURE_API_BASE"),
-    api_version=os.getenv("AZURE_API_VERSION"),
-    api_key=os.getenv("AZURE_API_KEY"),
+    model=os.getenv("MODEL_ID"),
+    azure_endpoint=os.getenv("MODEL_BASE_URL"),
+    api_version=os.getenv("MODEL_API_VERSION"),
+    api_key=os.getenv("MODEL_API_KEY"),
     model_capabilities={
         "vision": True,
         "function_calling": True,

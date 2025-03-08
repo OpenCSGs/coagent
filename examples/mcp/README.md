@@ -20,10 +20,10 @@ python examples/mcp/server.py
 Then start the MCP agent in another terminal:
 
 ```bash
-export AZURE_MODEL="your-model-name"
-export AZURE_API_BASE="your-api-base"
-export AZURE_API_VERSION="your-api-version"
-export AZURE_API_KEY="your-api-key"
+export MODEL_ID="your-model-id"
+export MODEL_BASE_URL="your-base-url"
+export MODEL_API_VERSION="your-api-version"
+export MODEL_API_KEY="your-api-key"
 
 python examples/mcp/agent.py
 ```
