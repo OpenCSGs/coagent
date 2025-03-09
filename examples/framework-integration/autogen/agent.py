@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from coagent.agents.chat_agent import ChatHistory, ChatMessage
+from coagent.agents import ChatMessage
 from coagent.core import (
     AgentSpec,
     BaseAgent,
@@ -12,6 +12,7 @@ from coagent.core import (
     set_stderr_logger,
 )
 from coagent.runtimes import NATSRuntime
+
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.task import TextMentionTermination
 from autogen_agentchat.teams import RoundRobinGroupChat
@@ -53,24 +54,22 @@ class AutoGenWeatherAgent(BaseAgent):
     agent_team = RoundRobinGroupChat([weather_agent], termination_condition=termination)
 
     @handler
-    async def handle(self, msg: ChatHistory, ctx: Context) -> ChatHistory:
+    async def handle(self, msg: ChatMessage, ctx: Context) -> ChatMessage:
         # Run the team and return the result.
-        result = await self.agent_team.run(task=msg.messages[-1].content)
+        result = await self.agent_team.run(task=msg.content)
         content = result.messages[-2].content
-        msg.messages.append(ChatMessage(role="assistant", content=content))
-        return msg
+        return ChatMessage(role="assistant", content=content)
 
 
-autogen = AgentSpec("autogen", new(AutoGenWeatherAgent))
+agent = AgentSpec("agent", new(AutoGenWeatherAgent))
 
 
 async def main():
     async with NATSRuntime.from_servers() as runtime:
-        await runtime.register(autogen)
+        await runtime.register(agent)
         await idle_loop()
 
 
 if __name__ == "__main__":
     set_stderr_logger("TRACE")
-
     asyncio.run(main())

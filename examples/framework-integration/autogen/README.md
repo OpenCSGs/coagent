@@ -30,13 +30,13 @@ export MODEL_BASE_URL="your-base-url"
 export MODEL_API_VERSION="your-api-version"
 export MODEL_API_KEY="your-api-key"
 
-python examples/using-autogen/autogen.py
+python examples/framework-integration/autogen/agent.py
 ```
 
-Then start a client in another terminal.
+Then communicate with the agent using the `coagent` CLI:
 
 ```bash
-python examples/rich_client.py autogen
+coagent agent -H type:ChatMessage --chat -d '{"role":"user","content":"What is the weather like in Beijing?"}'
 ```
 
 
