@@ -1,6 +1,6 @@
-# Using AutoGen
+# Integration with AutoGen
 
-This example demonstrates how to use [AutoGen's AgentChat][1] in Coagent.
+This example demonstrates how to integrate [AutoGen's AgentChat][1] into Coagent.
 
 References:
 

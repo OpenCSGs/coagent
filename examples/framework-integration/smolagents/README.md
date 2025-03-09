@@ -1,6 +1,6 @@
-# Using AutoGen
+# Integration with `smolagents`
 
-This example demonstrates how to use [smolagents' ToolCallingAgent][1] in Coagent.
+This example demonstrates how to integrate [smolagents.ToolCallingAgent][1] into Coagent.
 
 References:
 
