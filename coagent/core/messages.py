@@ -32,6 +32,7 @@ class Message(BaseModel):
         content = self.model_dump_json(
             exclude={"reply", "extensions"},
             exclude_defaults=exclude_defaults,
+            by_alias=True,
         )
         if content == "{}":
             content = ""
