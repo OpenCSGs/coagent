@@ -208,8 +208,9 @@ class ChatAgent(BaseAgent):
         system: str = "",
         tools: list[Callable] | None = None,
         client: ModelClient = default_model_client,
+        timeout: float = 300,
     ):
-        super().__init__()
+        super().__init__(timeout=timeout)
 
         self._name: str = name
         self._system: str = system

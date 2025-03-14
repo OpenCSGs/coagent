@@ -101,14 +101,14 @@ class BaseAgent(Agent):
 
     Args:
         timeout (float, optional): The inactivity timeout for transitioning the
-            agent state from RUNNING to IDLE. Defaults to 60 (in seconds).
+            agent state from RUNNING to IDLE. Defaults to 300 (in seconds).
 
             If the agent is not receiving any messages within this duration, it
             will be transitioned to the IDLE state. Once in the IDLE state, the
             agent will be deleted (recycled) by its corresponding factory agent.
     """
 
-    def __init__(self, timeout: float = 60):
+    def __init__(self, timeout: float = 300):
         # The following attributes will be set by the runtime after agent creation.
         self.channel: Channel | None = None
         self.address: Address | None = None
