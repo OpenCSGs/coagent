@@ -10,7 +10,9 @@ class TestMCPAgent:
     @pytest.mark.skipif(sys.platform == "win32", reason="Does not run on Windows.")
     @pytest.mark.asyncio
     async def test_get_prompt(self):
-        agent = MCPAgent(mcp_server_base_url="python tests/agents/mcp_server.py")
+        agent = MCPAgent(
+            mcp_server_base_url="python tests/agents/example_mcp_server.py"
+        )
         await agent.started()
 
         # String
@@ -34,7 +36,9 @@ class TestMCPAgent:
     @pytest.mark.skipif(sys.platform == "win32", reason="Does not run on Windows.")
     @pytest.mark.asyncio
     async def test_get_tools(self):
-        agent = MCPAgent(mcp_server_base_url="python tests/agents/mcp_server.py")
+        agent = MCPAgent(
+            mcp_server_base_url="python tests/agents/example_mcp_server.py"
+        )
         await agent.started()
 
         tools = await agent._get_tools(None)
@@ -101,7 +105,7 @@ class TestMCPAgent:
     async def test_get_tools_with_selection(self):
         selected_tools = ["query_weather"]
         agent = MCPAgent(
-            mcp_server_base_url="python tests/agents/mcp_server.py",
+            mcp_server_base_url="python tests/agents/example_mcp_server.py",
             tools=selected_tools,
         )
         await agent.started()
