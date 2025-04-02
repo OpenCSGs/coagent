@@ -1,6 +1,6 @@
 import abc
 import asyncio
-from typing import AsyncIterator
+from typing import AsyncIterator, Awaitable, Callable
 
 import pydantic
 
@@ -14,6 +14,7 @@ from .types import (
     Runtime,
     Address,
     RawMessage,
+    Subscription,
 )
 
 
@@ -179,3 +180,39 @@ class QueueSubscriptionIterator:
 
     def __aiter__(self):
         return self
+
+
+class NopChannel(Channel):
+    """A no-op channel mainly for testing purposes."""
+
+    async def connect(self) -> None:
+        pass
+
+    async def close(self) -> None:
+        pass
+
+    async def publish(
+        self,
+        addr: Address,
+        msg: RawMessage,
+        stream: bool = False,
+        request: bool = False,
+        reply: str = "",
+        timeout: float = 0.5,
+        probe: bool = True,
+    ) -> AsyncIterator[RawMessage] | RawMessage | None:
+        pass
+
+    async def subscribe(
+        self,
+        addr: Address,
+        handler: Callable[[RawMessage], Awaitable[None]],
+        queue: str = "",
+    ) -> Subscription:
+        pass
+
+    async def new_reply_topic(self) -> str:
+        return ""
+
+    async def cancel(self, addr: Address) -> None:
+        pass

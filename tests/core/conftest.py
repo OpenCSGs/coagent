@@ -1,44 +1,13 @@
 import asyncio
 import functools
 import inspect
-from typing import Callable, Awaitable
 
 import pytest
 
-from coagent.core.types import Address, Agent, RawMessage, Channel, Subscription
+from coagent.core.types import Agent
 from coagent.core.util import idle_loop
+from coagent.core.runtime import NopChannel
 from coagent.runtimes.local_runtime import LocalChannel
-
-
-class NopChannel(Channel):
-    async def connect(self) -> None:
-        pass
-
-    async def close(self) -> None:
-        pass
-
-    async def publish(
-        self,
-        addr: Address,
-        msg: RawMessage,
-        stream: bool = False,
-        request: bool = False,
-        reply: str = "",
-        timeout: float = 0.5,
-        probe: bool = True,
-    ) -> RawMessage | None:
-        pass
-
-    async def subscribe(
-        self,
-        addr: Address,
-        handler: Callable[[RawMessage], Awaitable[None]],
-        queue: str = "",
-    ) -> Subscription:
-        pass
-
-    async def new_reply_topic(self) -> str:
-        pass
 
 
 @pytest.fixture
