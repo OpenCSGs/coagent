@@ -3,6 +3,7 @@ from contextlib import AbstractAsyncContextManager, AsyncExitStack
 from typing import Any, Literal
 
 from coagent.core import BaseAgent, Context, handler, logger, Message
+from coagent.core.messages import Cancel
 from coagent.core.exceptions import InternalError
 from mcp import ClientSession, Tool as MCPTool  # noqa: F401
 from mcp.client.sse import sse_client
@@ -33,7 +34,7 @@ class MCPServerSSEParams(BaseModel):
 class Connect(Message):
     """A message to connect to the server.
 
-    To close the server, send a `Cancel` message to close the connection
+    To close the server, send a `Close` message to close the connection
     and delete corresponding server agent.
     """
 
@@ -58,6 +59,13 @@ class Connect(Message):
     because it can drastically increase latency (by introducing a round-trip
     to the server every time).
     """
+
+
+# A message to close the server.
+#
+# Note that this is an alias of the `Cancel` message since it's ok to close
+# the server by deleting the corresponding agent.
+Close = Cancel
 
 
 class InvalidateCache(Message):

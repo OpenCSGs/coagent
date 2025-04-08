@@ -8,11 +8,21 @@ from typing import Any, AsyncIterator, Callable
 
 from coagent.core import Address, BaseAgent, Context, handler, logger
 from coagent.core.agent import is_async_iterator
+import jsonschema
 from pydantic_core import PydanticUndefined
 from pydantic.fields import FieldInfo
 
 from .aswarm import Agent as SwarmAgent, Swarm
 from .aswarm.util import function_to_jsonschema
+from .mcp_server import (
+    CallTool,
+    CallToolResult,
+    ListTools,
+    ListToolsResult,
+    MCPTool,
+    MCPImageContent,
+    MCPTextContent,
+)
 from .messages import ChatMessage, ChatHistory, StructuredOutput
 from .model_client import default_model_client, ModelClient
 from .util import is_user_confirmed
@@ -207,6 +217,8 @@ class ChatAgent(BaseAgent):
         name: str = "",
         system: str = "",
         tools: list[Callable] | None = None,
+        mcp_servers: list[str] | None = None,
+        mcp_server_agent_type: str = "mcp_server",
         client: ModelClient = default_model_client,
         timeout: float = 300,
     ):
@@ -215,6 +227,8 @@ class ChatAgent(BaseAgent):
         self._name: str = name
         self._system: str = system
         self._tools: list[Callable] = tools or []
+        self._mcp_servers: list[str] = mcp_servers or []
+        self._mcp_server_agent_type: str = mcp_server_agent_type
         self._client: ModelClient = client
 
         self._swarm_client: Swarm = Swarm(self.client)
@@ -238,6 +252,14 @@ class ChatAgent(BaseAgent):
     @property
     def tools(self) -> list[Callable]:
         return self._tools
+
+    @property
+    def mcp_servers(self) -> list[str]:
+        return self._mcp_servers
+
+    @property
+    def mcp_server_agent_type(self) -> str:
+        return self._mcp_server_agent_type
 
     @property
     def client(self) -> ModelClient:
@@ -264,10 +286,16 @@ class ChatAgent(BaseAgent):
     async def get_swarm_agent(self) -> SwarmAgent:
         if not self._swarm_agent:
             tools = self.tools[:]  # copy
+
+            # Collect all methods marked as tools.
             methods = inspect.getmembers(self, predicate=inspect.ismethod)
             for _name, meth in methods:
                 if getattr(meth, "is_tool", False):
                     tools.append(meth)
+
+            # Collect all tools from MCP servers.
+            mcp_tools = await self._get_mcp_tools(self.mcp_servers)
+            tools.extend(mcp_tools)
 
             self._swarm_agent = SwarmAgent(
                 name=self.name,
@@ -313,6 +341,67 @@ class ChatAgent(BaseAgent):
                 response = self._handle_history(msg.input, msg.output_schema)
                 async for resp in response:
                     yield resp
+
+    async def _get_mcp_tools(self, mcp_servers: list[str]) -> list[Callable]:
+        all_tools = []
+
+        for server in mcp_servers:
+            raw_result = await self.channel.publish(
+                Address(name=self.mcp_server_agent_type, id=server),
+                ListTools().encode(),
+                request=True,
+                timeout=10,
+            )
+            result = ListToolsResult.decode(raw_result)
+
+            tools = [self._to_function_tool(server, t) for t in result.tools]
+            all_tools.extend(tools)
+
+        return all_tools
+
+    def _to_function_tool(self, server: str, t: MCPTool) -> Callable:
+        async def tool(**kwargs) -> Any:
+            # Validate the input against the schema
+            jsonschema.validate(instance=kwargs, schema=t.inputSchema)
+
+            # Actually call the tool.
+            raw_result = await self.channel.publish(
+                Address(name=self.mcp_server_agent_type, id=server),
+                CallTool(
+                    name=t.name,
+                    arguments=kwargs,
+                ).encode(),
+                request=True,
+                timeout=10,
+            )
+            result = CallToolResult.decode(raw_result)
+
+            if not result.content:
+                return ""
+            content = result.content[0]
+
+            if result.isError:
+                raise ValueError(content.text)
+
+            match content:
+                case MCPTextContent():
+                    return content.text
+                case MCPImageContent():
+                    return content.data
+                case _:  # EmbeddedResource() or other types
+                    return ""
+
+        tool.__name__ = t.name
+        tool.__doc__ = t.description
+
+        # Attach the schema and arguments to the tool.
+        tool.__mcp_tool_schema__ = dict(
+            name=t.name,
+            description=t.description,
+            parameters=t.inputSchema,
+        )
+        tool.__mcp_tool_args__ = tuple(t.inputSchema["properties"].keys())
+        return tool
 
     async def _handle_history(
         self,
