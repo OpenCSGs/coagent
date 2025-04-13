@@ -293,6 +293,7 @@ class AgentSpec:
         msg: RawMessage,
         stream: bool = False,
         session_id: str = "",
+        request: bool = True,
         timeout: float = 0.5,
     ) -> AsyncIterator[RawMessage] | RawMessage | None:
         """Create an agent and run it with the given message."""
@@ -303,7 +304,7 @@ class AgentSpec:
         addr = Address(name=self.name, id=session_id)
 
         return await self.__runtime.channel.publish(
-            addr, msg, stream=stream, request=True, timeout=timeout
+            addr, msg, stream=stream, request=request, timeout=timeout
         )
 
 
