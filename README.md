@@ -444,6 +444,7 @@ triage = AgentSpec(
 
 - [patterns](examples/patterns)
 - [mcp](examples/mcp)
+- [mcp-new](examples/mcp-new)
 - [structured-outputs](examples/structured-outputs)
 - [deepseek-r1](examples/deepseek-r1)
 - [translator](examples/translator)

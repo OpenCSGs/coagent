@@ -25,7 +25,7 @@ Then create a subscription via a proxy agent in another terminal:
 coagent proxy -H type:Subscribe --stream --filter .content -d '{"user_id": "1"}'
 ```
 
-Finally, send a notification to the center agent in a third terminal, and then observe the output in the second terminal:
+Finally, send a notification to the center agent in the third terminal, and then observe the output in the second terminal:
 
 ```bash
 coagent center:singleton -H type:Notify -d '{"user_id": "1", "notification": {"type": "created", "content": "Hello, world!"}}'
