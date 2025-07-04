@@ -10,13 +10,11 @@ try:
         AgentCard,
         AgentCapabilities,
         JSONRPCRequest,
-        JSONRPCResponse,
         SendMessageRequest,
         SendMessageResponse,
         SendMessageSuccessResponse,
         SendStreamingMessageRequest,
         SendStreamingMessageResponse,
-        SendStreamingMessageSuccessResponse,
         Message,
         Part,
         TextPart,
@@ -28,9 +26,8 @@ try:
     from starlette.applications import Starlette
     from starlette.middleware import Middleware
     from starlette.requests import Request
-    from starlette.responses import Response
     from starlette.routing import Route
-    from starlette.types import ExceptionHandler, Lifespan, Receive, Scope, Send
+    from starlette.types import ExceptionHandler, Lifespan
 except ImportError as exc:
     raise ImportError(
         "A2A package requires a2a-sdk and starlette. "
@@ -41,17 +38,13 @@ except ImportError as exc:
 from coagent.agents.messages import ChatMessage
 from coagent.core import (
     Address,
-    AgentSpec,
-    Constructor,
     DiscoveryQuery,
     DiscoveryReply,
     RawMessage,
-    MessageHeader,
-    logger,
 )
 from coagent.core.discovery import Schema
 from coagent.core.exceptions import BaseError
-from coagent.core.types import Channel, Runtime
+from coagent.core.types import Runtime
 
 
 @asynccontextmanager
@@ -247,7 +240,7 @@ class FastA2A(Starlette):
             try:
                 async for raw in msgs:
                     reply_content = ChatMessage.decode(raw).content
-                    resp = SendMessageSuccessResponse(
+                    resp = SendStreamingMessageResponse(
                         id=request.id,
                         result=Message(
                             role="agent",
