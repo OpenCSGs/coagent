@@ -57,7 +57,13 @@ An open-source framework for building monolithic or distributed agentic systems,
 ## Installation
 
 ```bash
-pip install git+https://github.com/OpenCSGs/coagent.git
+pip install coagent-python
+```
+
+To install with A2A support:
+
+```bash
+pip install "coagent-python[a2a]"
 ```
 
 

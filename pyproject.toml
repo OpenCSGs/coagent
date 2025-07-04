@@ -38,6 +38,9 @@ litellm = "1.60.4"
 mcp = ">=1.8.0"
 jinja2 = "3.1.5"
 
+[tool.poetry.extras]
+a2a = ["a2a-sdk>=0.2.10", "starlette>=0.47.0", "sse-starlette>=2.3.6"]
+
 [tool.pyright]
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
 useLibraryCodeForTypes = true
