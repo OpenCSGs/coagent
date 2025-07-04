@@ -101,7 +101,9 @@ class FastA2A(Starlette):
             inclusive=request.query_params.get("inclusive", "") == "true",
             detailed=request.query_params.get("detailed", "") == "true",
         )
-        return JSONResponse([card.model_dump(mode="json") for card in cards])
+        return JSONResponse(
+            [card.model_dump(mode="json", exclude_none=True) for card in cards]
+        )
 
     async def get_agent_card(self, request: Request) -> Response:
         cards = await self._discover_agents(
@@ -110,7 +112,7 @@ class FastA2A(Starlette):
             inclusive=True,
             detailed=False,
         )
-        card_dict = cards[0].model_dump(mode="json") if cards else {}
+        card_dict = cards[0].model_dump(mode="json", exclude_none=True) if cards else {}
         return JSONResponse(card_dict)
 
     async def _discover_agents(

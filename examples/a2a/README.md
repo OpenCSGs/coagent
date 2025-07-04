@@ -1,4 +1,4 @@
-# CoS Example
+# A2A Example
 
 
 ## Prerequisites
