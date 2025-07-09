@@ -77,7 +77,8 @@ class InvalidateCache(Message):
 class ListTools(Message):
     """A message to list the tools available on the server."""
 
-    pass
+    connect: Connect | None = None
+    """The optional data to connect to the server (if not already connected)."""
 
 
 class ListToolsResult(Message, MCPListToolsResult):
@@ -95,11 +96,22 @@ class CallTool(Message):
     arguments: dict[str, Any] | None = None
     """The arguments to pass to the tool."""
 
+    connect: Connect | None = None
+    """The optional data to connect to the server (if not already connected)."""
+
 
 class CallToolResult(Message, MCPCallToolResult):
     """The result of `ListTools`."""
 
     pass
+
+
+class NamedMCPServer(BaseModel):
+    name: str
+    """The unique ID of the MCP server."""
+
+    connect: Connect | None = None
+    """The optional data to connect to the server (if not already connected)."""
 
 
 class MCPServer(BaseAgent):
@@ -133,6 +145,11 @@ class MCPServer(BaseAgent):
         """Override to handle `ListTools` and `CallTool` messages concurrently."""
         match msg:
             case ListTools() | CallTool():
+                # Connect to the MCP server if not already connected.
+                # Note that this operation must be performed in a sequential manner.
+                if not self._client_session and msg.connect:
+                    await self.connect(msg.connect, ctx)
+
                 task = asyncio.create_task(super()._handle_data_custom(msg, ctx))
                 self._pending_tasks.add(task)
                 task.add_done_callback(self._pending_tasks.discard)

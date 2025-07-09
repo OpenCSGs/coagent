@@ -17,11 +17,13 @@ from .aswarm.util import function_to_jsonschema
 from .mcp_server import (
     CallTool,
     CallToolResult,
+    Close,
     ListTools,
     ListToolsResult,
-    MCPTool,
     MCPImageContent,
     MCPTextContent,
+    MCPTool,
+    NamedMCPServer,
 )
 from .messages import ChatMessage, ChatHistory, StructuredOutput
 from .model_client import default_model_client, ModelClient
@@ -217,7 +219,7 @@ class ChatAgent(BaseAgent):
         name: str = "",
         system: str = "",
         tools: list[Callable] | None = None,
-        mcp_servers: list[str] | None = None,
+        mcp_servers: list[NamedMCPServer] | None = None,
         mcp_server_agent_type: str = "mcp_server",
         client: ModelClient = default_model_client,
         timeout: float = 300,
@@ -227,7 +229,7 @@ class ChatAgent(BaseAgent):
         self._name: str = name
         self._system: str = system
         self._tools: list[Callable] = tools or []
-        self._mcp_servers: list[str] = mcp_servers or []
+        self._mcp_servers: list[NamedMCPServer] = mcp_servers or []
         self._mcp_server_agent_type: str = mcp_server_agent_type
         self._client: ModelClient = client
 
@@ -254,7 +256,7 @@ class ChatAgent(BaseAgent):
         return self._tools
 
     @property
-    def mcp_servers(self) -> list[str]:
+    def mcp_servers(self) -> list[NamedMCPServer]:
         return self._mcp_servers
 
     @property
@@ -264,6 +266,16 @@ class ChatAgent(BaseAgent):
     @property
     def client(self) -> ModelClient:
         return self._client
+
+    async def stopped(self) -> None:
+        for server in self.mcp_servers:
+            if server.connect is not None:
+                # Close the MCP server if it's auto-connected by the current agent.
+                await self.channel.publish(
+                    Address(name=self.mcp_server_agent_type, id=server.name),
+                    Close().encode(),
+                    request=False,
+                )
 
     def get_swarm_client(self, extensions: dict) -> Swarm:
         """Get the swarm client with the given message extensions.
@@ -342,13 +354,13 @@ class ChatAgent(BaseAgent):
                 async for resp in response:
                     yield resp
 
-    async def _get_mcp_tools(self, mcp_servers: list[str]) -> list[Callable]:
+    async def _get_mcp_tools(self, mcp_servers: list[NamedMCPServer]) -> list[Callable]:
         all_tools = []
 
         for server in mcp_servers:
             raw_result = await self.channel.publish(
-                Address(name=self.mcp_server_agent_type, id=server),
-                ListTools().encode(),
+                Address(name=self.mcp_server_agent_type, id=server.name),
+                ListTools(connect=server.connect).encode(),
                 request=True,
                 timeout=10,
             )
@@ -359,17 +371,18 @@ class ChatAgent(BaseAgent):
 
         return all_tools
 
-    def _to_function_tool(self, server: str, t: MCPTool) -> Callable:
+    def _to_function_tool(self, server: NamedMCPServer, t: MCPTool) -> Callable:
         async def tool(**kwargs) -> Any:
             # Validate the input against the schema
             jsonschema.validate(instance=kwargs, schema=t.inputSchema)
 
             # Actually call the tool.
             raw_result = await self.channel.publish(
-                Address(name=self.mcp_server_agent_type, id=server),
+                Address(name=self.mcp_server_agent_type, id=server.name),
                 CallTool(
                     name=t.name,
                     arguments=kwargs,
+                    connect=server.connect,
                 ).encode(),
                 request=True,
                 timeout=10,

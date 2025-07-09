@@ -1,18 +1,19 @@
 import asyncio
 
 from coagent.agents import ChatAgent
-from coagent.agents.mcp_server import MCPServer
+from coagent.agents.mcp_server import MCPServer, NamedMCPServer
 from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
 from coagent.runtimes import NATSRuntime
 
 
+# The agent for managing MCP servers
 server = AgentSpec("mcp_server", new(MCPServer))
 
 agent = AgentSpec(
     "mcp",
     new(
         ChatAgent,
-        mcp_servers=["server1"],
+        mcp_servers=[NamedMCPServer(name="server1")],
         system="You are a helpful Weather Reporter",
     ),
 )
