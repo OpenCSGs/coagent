@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import asyncio
 from contextlib import AbstractAsyncContextManager, AsyncExitStack
 from typing import Any, Literal
+from urllib.parse import urljoin
 
 from coagent.core import BaseAgent, Context, handler, logger, Message
 from coagent.core.messages import Cancel
@@ -29,6 +32,11 @@ class MCPServerSSEParams(BaseModel):
 
     headers: dict[str, str] | None = None
     """The headers to send to the server."""
+
+    def normalize(self) -> MCPServerSSEParams:
+        if not self.url.endswith("/sse"):
+            self.url = urljoin(self.url, "sse")
+        return self
 
 
 class Connect(Message):
@@ -161,7 +169,7 @@ class MCPServer(BaseAgent):
         """Connect to the server."""
         if msg.transport == "sse":
             ctx_manager: AbstractAsyncContextManager = sse_client(
-                **msg.params.model_dump()
+                **msg.params.normalize().model_dump()
             )
         else:  # "stdio":
             ctx_manager: AbstractAsyncContextManager = stdio_client(msg.params)
