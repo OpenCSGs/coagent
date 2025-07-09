@@ -11,6 +11,7 @@ from coagent.agents.chat_agent import (
     ListToolsResult,
     MCPTextContent,
     MCPTool,
+    NamedMCPServer,
     wrap_error,
 )
 from coagent.core import Address, RawMessage
@@ -104,7 +105,7 @@ class TestChatAgent:
         addr = Address(name="test", id="0")
         agent.init(MCPServerTestChannel(), addr)
 
-        tools = await agent._get_mcp_tools(["server1"])
+        tools = await agent._get_mcp_tools([NamedMCPServer(name="server1")])
         assert len(tools) == 1
         # Tool query_weather
         tool = tools[0]
