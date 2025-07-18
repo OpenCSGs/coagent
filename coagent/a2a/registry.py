@@ -1,6 +1,5 @@
 try:
-    from a2a.client import A2ACardResolver, A2AClient
-    from a2a.types import AgentCard
+    from a2a.client import A2ACardResolver
 except ImportError as exc:
     raise ImportError(
         "A2A package requires a2a-sdk. "

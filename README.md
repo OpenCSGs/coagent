@@ -11,7 +11,8 @@ An open-source framework for building monolithic or distributed agentic systems,
 
 ## Latest Updates
 
-- 🚀 **2025-02-08**: Added support for [DeepSeek-R1](https://api-docs.deepseek.com/news/news250120), check out the [example](examples/deepseek-r1).
+- 🚀 **2025-07-18**: Added support for [A2A](https://a2a-protocol.org/), check out the [example](examples/a2a).
+- **2025-02-08**: Added support for [DeepSeek-R1](https://api-docs.deepseek.com/news/news250120), check out the [example](examples/deepseek-r1).
 - **2025-01-28**: Added support for [Structured Outputs][2].
 - **2025-01-22**: Added support for [Model Context Protocol][3].
 - **2025-01-17**: Added integration with [LiteLLM](https://github.com/BerriAI/litellm).
