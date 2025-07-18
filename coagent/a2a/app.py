@@ -34,7 +34,6 @@ except ImportError as exc:
         "Install with 'pip install coagent-python[a2a]'"
     ) from exc
 
-
 from coagent.agents.messages import ChatMessage
 from coagent.core import (
     Address,
@@ -45,6 +44,9 @@ from coagent.core import (
 from coagent.core.discovery import Schema
 from coagent.core.exceptions import BaseError
 from coagent.core.types import Runtime
+import httpx
+
+from .registry import A2ARegistry
 
 
 @asynccontextmanager
@@ -60,6 +62,7 @@ class FastA2A(Starlette):
         *,
         runtime: Runtime,
         base_url: str,
+        httpx_client: httpx.AsyncClient | None = None,
         # Starlette
         debug: bool = False,
         routes: Sequence[Route] | None = None,
@@ -78,7 +81,7 @@ class FastA2A(Starlette):
         self.runtime: Runtime = runtime
         self.base_url: str = base_url
 
-        # Setup routes
+        # Setup routes for exposing Coagent agents as A2A agents.
         self.router.add_route("/agents", self.get_agent_card_list, methods=["GET"])
         self.router.add_route("/agents/{name}", self.run_agent, methods=["POST"])
         self.router.add_route(
@@ -86,6 +89,16 @@ class FastA2A(Starlette):
             self.get_agent_card,
             methods=["GET"],
         )
+
+        if httpx_client:
+            self.registry = A2ARegistry(runtime, httpx_client)
+
+            # Setup routes for registering/deregistering A2A agents and adapting
+            # them into Coagent agents.
+            self.router.add_route("/agents", self.register_agent, methods=["POST"])
+            self.router.add_route(
+                "/agents/{name}", self.deregister_agent, methods=["DELETE"]
+            )
 
     async def get_agent_card_list(self, request: Request) -> Response:
         cards = await self._discover_agents(
@@ -259,3 +272,18 @@ class FastA2A(Starlette):
                 await self.runtime.channel.cancel(addr)
 
         return EventSourceResponse(event_stream())
+
+    async def register_agent(self, request: Request) -> Response:
+        data = await request.json()
+        url = data.get("url")
+        if not url:
+            return JSONResponse({"error": "url is required"}, status_code=400)
+
+        name = await self.registry.register(url)
+        return JSONResponse({"name": name})
+
+    async def deregister_agent(self, request: Request) -> Response:
+        name = request.path_params["name"]
+
+        await self.registry.deregister(name)
+        return Response(status_code=204)

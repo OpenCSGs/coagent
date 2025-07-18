@@ -15,6 +15,8 @@ Start the A2A server in one terminal:
 python examples/a2a/app.py
 ```
 
+### Convert Coagent agents to A2A agents
+
 Then run the [translator](../translator/README.md) agent in another terminal:
 
 ```bash
@@ -32,8 +34,37 @@ Discover all available agents:
 curl http://localhost:8000/agents | jq
 ```
 
-Start the A2A test client:
+Run the A2A test client:
 
 ```bash
 python examples/a2a/client.py --url=http://localhost:8000/agents/translator
+```
+
+### Convert A2A agents to Coagent agents
+
+Run A2A agent (see [Helloworld Example](https://github.com/a2aproject/a2a-python#helloworld-example)):
+
+```bash
+git clone https://github.com/a2aproject/a2a-samples.git
+cd a2a-samples/samples/python/agents/helloworld
+uv run .
+```
+
+Register the A2A agent:
+
+```bash
+curl -XPOST http://localhost:8000/agents -d '{"url": "http://localhost:9999"}'
+{"name":"hello_world_agent"}
+```
+
+Or deregister the A2A agent:
+
+```bash
+curl -XDELETE http://localhost:8000/agents/hello_world_agent
+```
+
+Communicate with the agent using the `coagent` CLI:
+
+```bash
+coagent hello_world_agent -H type:ChatMessage -d '{"role":"user", "content":"hello"}' --chat
 ```

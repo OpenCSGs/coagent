@@ -1,3 +1,5 @@
+import httpx
+
 from coagent.core import set_stderr_logger
 from coagent.runtimes import LocalRuntime, NATSRuntime  # noqa: F401
 from coagent.a2a.app import FastA2A
@@ -6,7 +8,13 @@ PORT = 8000
 
 # runtime = LocalRuntime()
 runtime = NATSRuntime.from_servers()
-app = FastA2A(runtime=runtime, base_url=f"http://localhost:{PORT}", debug=True)
+httpx_client = httpx.AsyncClient()
+app = FastA2A(
+    runtime=runtime,
+    base_url=f"http://localhost:{PORT}",
+    httpx_client=httpx_client,
+    debug=True,
+)
 
 
 if __name__ == "__main__":
