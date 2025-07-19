@@ -1,13 +1,13 @@
 import asyncio
 import os
 
-from coagent.agents import ChatAgent, Sequential, ModelClient
+from coagent.agents import ChatAgent, Sequential, Model
 from coagent.agents.messages import ChatMessage
 from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import LocalRuntime
 
-client = ModelClient(
-    model=os.getenv("MODEL_ID"),
+model = Model(
+    id=os.getenv("MODEL_ID"),
     base_url=os.getenv("MODEL_BASE_URL"),
     api_version=os.getenv("MODEL_API_VERSION"),
     api_key=os.getenv("MODEL_API_KEY"),
@@ -24,7 +24,7 @@ Example format:
 92: customer satisfaction
 45%: revenue growth\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -40,7 +40,7 @@ Example format:
 92%: customer satisfaction
 45%: revenue growth\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -55,7 +55,7 @@ Example:
 92%: customer satisfaction
 87%: employee satisfaction\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -69,7 +69,7 @@ Format the sorted data as a markdown table with columns:
 |:--|--:|
 | Customer Satisfaction | 92% |\
 """,
-        client=client,
+        model=model,
     ),
 )
 

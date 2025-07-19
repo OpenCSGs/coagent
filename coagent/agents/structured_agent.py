@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from .chat_agent import ChatAgent
 from .messages import ChatHistory, ChatMessage, type_to_response_format_param
-from .model_client import default_model_client, ModelClient
+from .model import default_model, Model
 
 
 class StructuredAgent(ChatAgent):
@@ -17,9 +17,9 @@ class StructuredAgent(ChatAgent):
         system: str = "",
         messages: list[ChatMessage] | None = None,
         tools: list[Callable] | None = None,
-        client: ModelClient = default_model_client,
+        model: Model = default_model,
     ):
-        super().__init__(system=system, tools=tools, client=client)
+        super().__init__(system=system, tools=tools, model=model)
         self._input_type: Type[Message] = input_type
         self._output_type: Type[BaseModel] | Type[str] = output_type
 

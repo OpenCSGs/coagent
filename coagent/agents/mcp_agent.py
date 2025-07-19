@@ -11,7 +11,7 @@ import jsonschema
 
 from .aswarm import Agent as SwarmAgent
 from .chat_agent import ChatAgent, wrap_error
-from .model_client import default_model_client, ModelClient
+from .model import default_model, Model
 
 
 @dataclasses.dataclass
@@ -29,9 +29,9 @@ class MCPAgent(ChatAgent):
         mcp_server_headers: dict[str, Any] | None = None,
         system: Prompt | str = "",
         tools: list[str] | None = None,
-        client: ModelClient = default_model_client,
+        model: Model = default_model,
     ) -> None:
-        super().__init__(system="", client=client)
+        super().__init__(system="", model=model)
 
         self._mcp_server_base_url: str = mcp_server_base_url
         self._mcp_server_headers: dict[str, Any] | None = mcp_server_headers
@@ -109,7 +109,7 @@ class MCPAgent(ChatAgent):
             tools = await self._get_tools(self.tools)
             self._mcp_swarm_agent = SwarmAgent(
                 name=self.name,
-                model=self.client.model,
+                model=self.model.id,
                 instructions=system,
                 functions=[wrap_error(t) for t in tools],
             )

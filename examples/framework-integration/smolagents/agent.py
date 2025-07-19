@@ -2,7 +2,7 @@ import asyncio
 import os
 from typing import Callable
 
-from coagent.agents import ChatMessage, ModelClient
+from coagent.agents import ChatMessage, Model
 from coagent.agents.util import run_in_thread
 from coagent.core import (
     AgentSpec,
@@ -20,18 +20,18 @@ from smolagents.agents import ToolCallingAgent
 
 
 class ReActAgent(BaseAgent):
-    def __init__(self, tools: list[Callable], client: ModelClient):
+    def __init__(self, tools: list[Callable], model: Model):
         super().__init__()
 
-        model = LiteLLMModel(
-            model_id=client.model,
-            api_base=client.base_url,
-            api_key=client.api_key,
+        litellm_model = LiteLLMModel(
+            model_id=model.id,
+            api_base=model.base_url,
+            api_key=model.api_key,
         )
         # Convert tools to smolagents tools.
         tools = [smolagents_tool(t) for t in tools]
 
-        self.smol_agent = ToolCallingAgent(tools=tools, model=model)
+        self.smol_agent = ToolCallingAgent(tools=tools, model=litellm_model)
 
     @handler
     async def handle(self, msg: ChatMessage, ctx: Context) -> ChatMessage:
@@ -60,8 +60,8 @@ agent = AgentSpec(
     new(
         ReActAgent,
         tools=[get_weather],
-        client=ModelClient(
-            model=os.getenv("MODEL_ID"),
+        model=Model(
+            id=os.getenv("MODEL_ID"),
             base_url=os.getenv("MODEL_BASE_URL"),
             api_key=os.getenv("MODEL_API_KEY"),
         ),

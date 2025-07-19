@@ -6,14 +6,14 @@ from coagent.agents import (
     AggregationResult,
     ChatAgent,
     ChatMessage,
-    ModelClient,
+    Model,
     Parallel,
 )
 from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import LocalRuntime
 
-client = ModelClient(
-    model=os.getenv("MODEL_ID"),
+model = Model(
+    id=os.getenv("MODEL_ID"),
     base_url=os.getenv("MODEL_BASE_URL"),
     api_version=os.getenv("MODEL_API_VERSION"),
     api_key=os.getenv("MODEL_API_KEY"),
@@ -29,7 +29,7 @@ Customers:
 - Want better tech
 - Environmental concerns\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -43,7 +43,7 @@ Employees:
 - Need new skills
 - Want clear direction\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -57,7 +57,7 @@ Investors:
 - Want cost control
 - Risk concerns\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -71,7 +71,7 @@ Suppliers:
 - Price pressures
 - Tech transitions\
 """,
-        client=client,
+        model=model,
     ),
 )
 

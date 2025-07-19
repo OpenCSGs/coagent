@@ -8,6 +8,6 @@ from .messages import (
     StructuredOutput,
     type_to_response_format_param,
 )
-from .model_client import ModelClient
+from .model import Model
 from .parallel import Aggregator, AggregationResult, Parallel
 from .sequential import Sequential

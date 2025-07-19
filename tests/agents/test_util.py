@@ -8,21 +8,21 @@ from pydantic import Field
 
 
 @pytest.mark.asyncio
-async def test_chat(mock_model_client):
+async def test_chat(mock_model):
     response = await chat(
         messages=[],
         stream=False,
-        client=mock_model_client,
+        model=mock_model,
     )
     assert response.content == "hello"
 
 
 @pytest.mark.asyncio
-async def test_chat_stream(mock_model_client):
+async def test_chat_stream(mock_model):
     response = await chat(
         messages=[],
         stream=True,
-        client=mock_model_client,
+        model=mock_model,
     )
     chunk = None
     async for _chunk in response:

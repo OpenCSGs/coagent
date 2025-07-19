@@ -11,9 +11,9 @@ from pydantic import BaseModel, Field
 #     pass
 
 
-class ModelClient(BaseModel):
+class Model(BaseModel):
     provider: str = Field("", description="The model provider.")
-    model: str = Field(..., description="The model ID.")
+    id: str = Field(..., description="The model ID.")
     base_url: str = Field("", description="The base URL.")
     api_version: str = Field("", description="The API version.")
     api_key: str = Field("", description="The API key.")
@@ -26,7 +26,7 @@ class ModelClient(BaseModel):
         import litellm
 
         _, provider, _, _ = litellm.get_llm_provider(
-            self.model,
+            self.id,
             api_base=self.base_url or None,
         )
         return provider
@@ -44,7 +44,7 @@ class ModelClient(BaseModel):
     ):  # -> ModelResponse:
         import litellm
 
-        model = model or self.model
+        model = model or self.id
         response = await litellm.acompletion(
             model=model,
             messages=messages,
@@ -61,9 +61,14 @@ class ModelClient(BaseModel):
         return response
 
 
-default_model_client = ModelClient(
-    model=os.getenv("MODEL_ID", ""),
+default_model = Model(
+    id=os.getenv("MODEL_ID", ""),
     base_url=os.getenv("MODEL_BASE_URL", ""),
     api_version=os.getenv("MODEL_API_VERSION", ""),
     api_key=os.getenv("MODEL_API_KEY", ""),
 )
+
+
+# For backwards compatibility.
+ModelClient = Model
+default_model_client = default_model

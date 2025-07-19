@@ -1,12 +1,12 @@
 import asyncio
 import os
 
-from coagent.agents import ChatAgent, ChatMessage, DynamicTriage, ModelClient
+from coagent.agents import ChatAgent, ChatMessage, DynamicTriage, Model
 from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import LocalRuntime
 
-client = ModelClient(
-    model=os.getenv("MODEL_ID"),
+model = Model(
+    id=os.getenv("MODEL_ID"),
     base_url=os.getenv("MODEL_BASE_URL"),
     api_version=os.getenv("MODEL_API_VERSION"),
     api_key=os.getenv("MODEL_API_KEY"),
@@ -26,7 +26,7 @@ You are a billing support specialist. Follow these guidelines:
 
 Keep responses professional but friendly.\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -44,7 +44,7 @@ You are an account security specialist. Follow these guidelines:
 
 Maintain a serious, security-focused tone.\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -53,7 +53,7 @@ triage = AgentSpec(
     new(
         DynamicTriage,
         system="""You are a triage agent who will delegate to sub-agents based on the conversation content.""",
-        client=client,
+        model=model,
         namespace="team",  # Collect all sub-agents under the team namespace
     ),
 )

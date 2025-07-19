@@ -8,7 +8,7 @@ from typing import Any, AsyncIterator, List, Callable, Union
 from openai.types.chat import ChatCompletionChunk
 from openai.types.chat.chat_completion_chunk import Choice, ChoiceDelta
 from coagent.agents.messages import ChatMessage
-from coagent.agents.model_client import ModelClient
+from coagent.agents.model import Model
 from coagent.core.agent import is_async_iterator
 from coagent.core.util import get_func_args, pretty_trace_tool_call
 
@@ -33,8 +33,8 @@ from .types import (
 
 
 class Swarm:
-    def __init__(self, client: ModelClient):
-        self.client: ModelClient = client
+    def __init__(self, model: Model):
+        self.model: Model = model
 
     async def get_chat_completion(
         self,
@@ -88,7 +88,7 @@ class Swarm:
             p.pop("reasoning_content", None)  # Remove possible reasoning content.
 
         try:
-            response = await self.client.acompletion(**create_params)
+            response = await self.model.acompletion(**create_params)
             async for chunk in response:
                 yield chunk
         except Exception as exc:

@@ -1,6 +1,6 @@
 import asyncio
 
-from coagent.agents import ChatAgent, ChatMessage, ModelClient, StructuredOutput
+from coagent.agents import ChatAgent, ChatMessage, Model, StructuredOutput
 from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import LocalRuntime
 from pydantic import BaseModel
@@ -16,8 +16,8 @@ class FriendList(BaseModel):
     friends: list[FriendInfo]
 
 
-client = ModelClient(
-    model="openai/llama3.1",
+model = Model(
+    id="openai/llama3.1",
     base_url="http://localhost:11434/v1",
     api_key="ollama",
 )
@@ -27,7 +27,7 @@ structured = AgentSpec(
     "structured",
     new(
         ChatAgent,
-        client=client,
+        model=model,
     ),
 )
 

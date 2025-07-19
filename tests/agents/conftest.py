@@ -1,9 +1,9 @@
 import pytest
 
-from coagent.agents.model_client import ModelClient
+from coagent.agents.model import Model
 
 
-class MockModelClient(ModelClient):
+class MockModel(Model):
     async def acompletion(
         self,
         messages: list[dict],
@@ -38,5 +38,5 @@ class MockModelClient(ModelClient):
 
 
 @pytest.fixture
-def mock_model_client() -> ModelClient:
-    return MockModelClient(model="mock_model")
+def mock_model() -> Model:
+    return MockModel(id="mock_model")

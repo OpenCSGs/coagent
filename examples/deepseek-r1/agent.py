@@ -1,19 +1,19 @@
 import asyncio
 import os
 
-from coagent.agents import ChatAgent, ChatMessage, ModelClient
+from coagent.agents import ChatAgent, ChatMessage, Model
 from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import LocalRuntime
 
 
-client = ModelClient(
-    model="openai/deepseek-reasoner",
+model = Model(
+    id="openai/deepseek-reasoner",
     base_url="https://api.deepseek.com/v1",
     api_key=os.getenv("DEEPSEEK_API_KEY"),
 )
 
 
-deepseek_reasoner = AgentSpec("deepseek_reasoner", new(ChatAgent, client=client))
+deepseek_reasoner = AgentSpec("deepseek_reasoner", new(ChatAgent, model=model))
 
 
 async def main():

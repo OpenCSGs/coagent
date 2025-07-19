@@ -81,7 +81,7 @@ Implement the agent:
 import asyncio
 import os
 
-from coagent.agents import ChatAgent, ChatMessage, ModelClient
+from coagent.agents import ChatAgent, ChatMessage, Model
 from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import LocalRuntime
 
@@ -90,7 +90,7 @@ translator = AgentSpec(
     new(
         ChatAgent,
         system="You are a professional translator that can translate Chinese to English.",
-        client=ModelClient(model="openai/gpt-4o", api_key=os.getenv("OPENAI_API_KEY")),
+        model=Model(id="openai/gpt-4o", api_key=os.getenv("OPENAI_API_KEY")),
     ),
 )
 
@@ -137,7 +137,7 @@ Implement the agent:
 import asyncio
 import os
 
-from coagent.agents import ChatAgent, ModelClient
+from coagent.agents import ChatAgent, Model
 from coagent.core import AgentSpec, idle_loop, new, init_logger
 from coagent.runtimes import NATSRuntime
 
@@ -146,7 +146,7 @@ translator = AgentSpec(
     new(
         ChatAgent,
         system="You are a professional translator that can translate Chinese to English.",
-        client=ModelClient(model="openai/gpt-4o", api_key=os.getenv("OPENAI_API_KEY")),
+        model=Model(id="openai/gpt-4o", api_key=os.getenv("OPENAI_API_KEY")),
     ),
 )
 
@@ -191,13 +191,13 @@ coagent translator -H type:ChatMessage --chat -d '{"role": "user", "content": "ä
 **Example** (see [examples/patterns/augmented_llm.py](examples/patterns/augmented_llm.py) for a runnable example):
 
 ```python
-from coagent.agents import ChatAgent, ModelClient, tool
+from coagent.agents import ChatAgent, Model, tool
 from coagent.core import AgentSpec, new
 
 
 class Assistant(ChatAgent):
     system = """You are an agent who can use tools."""
-    client = ModelClient(...)
+    model = Model(...)
 
     @tool
     async def query_weather(self, city: str) -> str:
@@ -221,10 +221,10 @@ assistant = AgentSpec("assistant", new(Assistant))
 **Example** (see [examples/patterns/chaining.py](examples/patterns/chaining.py) for a runnable example):
 
 ```python
-from coagent.agents import ChatAgent, Sequential, ModelClient
+from coagent.agents import ChatAgent, Sequential, Model
 from coagent.core import AgentSpec, new
 
-client = ModelClient(...)
+model = Model(...)
 
 extractor = AgentSpec(
     "extractor",
@@ -237,7 +237,7 @@ Example format:
 92: customer satisfaction
 45%: revenue growth\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -253,7 +253,7 @@ Example format:
 92%: customer satisfaction
 45%: revenue growth\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -268,7 +268,7 @@ Example:
 92%: customer satisfaction
 87%: employee satisfaction\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -282,7 +282,7 @@ Format the sorted data as a markdown table with columns:
 |:--|--:|
 | Customer Satisfaction | 92% |\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -304,10 +304,10 @@ chain = AgentSpec(
 **Example** (see [examples/patterns/parallelization.py](examples/patterns/parallelization.py) for a runnable example):
 
 ```python
-from coagent.agents import Aggregator, ChatAgent, ModelClient, Parallel
+from coagent.agents import Aggregator, ChatAgent, Model, Parallel
 from coagent.core import AgentSpec, new
 
-client = ModelClient(...)
+model = Model(...)
 
 customer = AgentSpec(
     "customer",
@@ -319,7 +319,7 @@ Customers:
 - Want better tech
 - Environmental concerns\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -333,7 +333,7 @@ Employees:
 - Need new skills
 - Want clear direction\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -347,7 +347,7 @@ Investors:
 - Want cost control
 - Risk concerns\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -361,7 +361,7 @@ Suppliers:
 - Price pressures
 - Tech transitions\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -394,10 +394,10 @@ parallel = AgentSpec(
 **Example** (see [examples/patterns/triaging.py](examples/patterns/triaging.py) for a runnable example):
 
 ```python
-from coagent.agents import ChatAgent, DynamicTriage, ModelClient
+from coagent.agents import ChatAgent, DynamicTriage, Model
 from coagent.core import AgentSpec, new
 
-client = ModelClient(...)
+model = Model(...)
 
 billing = AgentSpec(
     "team.billing",  # Under the team namespace
@@ -413,7 +413,7 @@ You are a billing support specialist. Follow these guidelines:
 
 Keep responses professional but friendly.\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -431,7 +431,7 @@ You are an account security specialist. Follow these guidelines:
 
 Maintain a serious, security-focused tone.\
 """,
-        client=client,
+        model=model,
     ),
 )
 
@@ -440,7 +440,7 @@ triage = AgentSpec(
     new(
         DynamicTriage,
         system="""You are a triage agent who will delegate to sub-agents based on the conversation content.""",
-        client=client,
+        model=model,
         namespace="team",  # Collect all sub-agents under the team namespace
     ),
 )

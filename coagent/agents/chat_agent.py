@@ -26,7 +26,7 @@ from .mcp_server import (
     NamedMCPServer,
 )
 from .messages import ChatMessage, ChatHistory, StructuredOutput
-from .model_client import default_model_client, ModelClient
+from .model import default_model, Model
 from .util import is_user_confirmed
 
 
@@ -221,7 +221,7 @@ class ChatAgent(BaseAgent):
         tools: list[Callable] | None = None,
         mcp_servers: list[NamedMCPServer] | None = None,
         mcp_server_agent_type: str = "mcp_server",
-        client: ModelClient = default_model_client,
+        model: Model = default_model,
         timeout: float = 300,
     ):
         super().__init__(timeout=timeout)
@@ -231,9 +231,9 @@ class ChatAgent(BaseAgent):
         self._tools: list[Callable] = tools or []
         self._mcp_servers: list[NamedMCPServer] = mcp_servers or []
         self._mcp_server_agent_type: str = mcp_server_agent_type
-        self._client: ModelClient = client
+        self._model: Model = model
 
-        self._swarm_client: Swarm = Swarm(self.client)
+        self._swarm_client: Swarm = Swarm(self.model)
         self._swarm_agent: SwarmAgent | None = None
 
         self._history: ChatHistory = ChatHistory(messages=[])
@@ -264,8 +264,8 @@ class ChatAgent(BaseAgent):
         return self._mcp_server_agent_type
 
     @property
-    def client(self) -> ModelClient:
-        return self._client
+    def model(self) -> Model:
+        return self._model
 
     async def stopped(self) -> None:
         for server in self.mcp_servers:
@@ -285,13 +285,13 @@ class ChatAgent(BaseAgent):
         model_id = extensions.get("model_id", "")
         if model_id:
             # We assume that non-empty model ID indicates the use of a dynamic model client.
-            client = ModelClient(
+            model = Model(
                 model=model_id,
                 base_url=extensions.get("model_base_url", ""),
                 api_key=extensions.get("model_api_key", ""),
                 api_version=extensions.get("model_api_version", ""),
             )
-            return Swarm(client)
+            return Swarm(model)
 
         return self._swarm_client
 
@@ -311,7 +311,7 @@ class ChatAgent(BaseAgent):
 
             self._swarm_agent = SwarmAgent(
                 name=self.name,
-                model=self.client.model,
+                model=self.model.id,
                 instructions=self.system,
                 functions=[wrap_error(t) for t in tools],
             )

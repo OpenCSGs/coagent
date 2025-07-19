@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from coagent.agents import ChatAgent, ModelClient, tool
+from coagent.agents import ChatAgent, Model, tool
 from coagent.agents.messages import ChatMessage
 from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import LocalRuntime
@@ -9,8 +9,8 @@ from coagent.runtimes import LocalRuntime
 
 class Assistant(ChatAgent):
     system = """You are an agent who can use tools."""
-    client = ModelClient(
-        model=os.getenv("MODEL_ID"),
+    model = Model(
+        id=os.getenv("MODEL_ID"),
         base_url=os.getenv("MODEL_BASE_URL"),
         api_version=os.getenv("MODEL_API_VERSION"),
         api_key=os.getenv("MODEL_API_KEY"),
