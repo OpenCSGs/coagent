@@ -6,7 +6,7 @@ from typing import List, Union, AsyncIterator
 import uuid
 
 from coagent.agents.chat_agent import ChatHistory, ChatMessage
-from coagent.core import Address, set_stderr_logger
+from coagent.core import Address, init_logger
 from coagent.runtimes import NATSRuntime, HTTPRuntime
 
 from textual import on, work  # noqa: F401
@@ -130,7 +130,7 @@ class BotApp(App):
 
 
 if __name__ == "__main__":
-    set_stderr_logger("ERROR")
+    init_logger("ERROR")
 
     parser = argparse.ArgumentParser()
     parser.add_argument("agent", type=str)

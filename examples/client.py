@@ -3,7 +3,7 @@ import argparse
 import uuid
 
 from coagent.agents.chat_agent import ChatHistory, ChatMessage
-from coagent.core import Address, set_stderr_logger
+from coagent.core import Address, init_logger
 from coagent.core.util import exit_loop
 from coagent.runtimes import NATSRuntime
 
@@ -34,7 +34,7 @@ async def main(agent_name: str):
 
 
 if __name__ == "__main__":
-    set_stderr_logger("ERROR")
+    init_logger("ERROR")
 
     parser = argparse.ArgumentParser()
     parser.add_argument("agent", type=str)

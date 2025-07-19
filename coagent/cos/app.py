@@ -6,7 +6,7 @@ from starlette.applications import Starlette
 from starlette.routing import Route
 
 from coagent.cos.runtime import CosRuntime
-from coagent.core import set_stderr_logger
+from coagent.core import init_logger
 from coagent.runtimes import NATSRuntime, HTTPRuntime
 
 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    set_stderr_logger()
+    init_logger()
     app = Application(args.server, args.auth).starlette
 
     config = Config()

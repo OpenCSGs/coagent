@@ -7,7 +7,7 @@ from coagent.core import (
     DiscoveryQuery,
     DiscoveryReply,
     RawMessage,
-    set_stderr_logger,
+    init_logger,
 )
 from coagent.runtimes import NATSRuntime, HTTPRuntime
 
@@ -46,7 +46,7 @@ async def main(
 
 
 if __name__ == "__main__":
-    set_stderr_logger("ERROR")
+    init_logger("ERROR")
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--server", type=str, default="nats://localhost:4222")

@@ -9,7 +9,7 @@ from coagent.agents import (
     ModelClient,
     Parallel,
 )
-from coagent.core import AgentSpec, new, set_stderr_logger
+from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import LocalRuntime
 
 client = ModelClient(
@@ -112,5 +112,5 @@ Format with clear sections and priorities.\
 
 
 if __name__ == "__main__":
-    set_stderr_logger()
+    init_logger()
     asyncio.run(main())

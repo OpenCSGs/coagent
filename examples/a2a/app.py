@@ -1,6 +1,6 @@
 import httpx
 
-from coagent.core import set_stderr_logger
+from coagent.core import init_logger
 from coagent.runtimes import LocalRuntime, NATSRuntime  # noqa: F401
 from coagent.a2a.app import FastA2A
 
@@ -18,7 +18,7 @@ app = FastA2A(
 
 
 if __name__ == "__main__":
-    set_stderr_logger("INFO")
+    init_logger("INFO")
 
     import uvicorn
 

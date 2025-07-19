@@ -5,7 +5,7 @@ from .agent import (
     handler,
 )
 from .discovery import DiscoveryQuery, DiscoveryReply
-from .logger import logger, set_stderr_logger
+from .logger import logger, init_logger
 from .messages import Message, GenericMessage, SetReplyInfo, StopIteration
 from .runtime import BaseRuntime, BaseChannel, QueueSubscriptionIterator
 from .types import (

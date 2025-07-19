@@ -7,7 +7,7 @@ from coagent.agents.mcp_server import (
     MCPServerStdioParams,
     NamedMCPServer,
 )
-from coagent.core import AgentSpec, new, set_stderr_logger
+from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import LocalRuntime
 
 
@@ -54,5 +54,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    set_stderr_logger("DEBUG")
+    init_logger("DEBUG")
     asyncio.run(main())

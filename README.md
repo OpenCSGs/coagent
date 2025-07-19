@@ -82,7 +82,7 @@ import asyncio
 import os
 
 from coagent.agents import ChatAgent, ChatMessage, ModelClient
-from coagent.core import AgentSpec, new, set_stderr_logger
+from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import LocalRuntime
 
 translator = AgentSpec(
@@ -109,7 +109,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    set_stderr_logger()
+    init_logger()
     asyncio.run(main())
 ```
 
@@ -138,7 +138,7 @@ import asyncio
 import os
 
 from coagent.agents import ChatAgent, ModelClient
-from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
+from coagent.core import AgentSpec, idle_loop, new, init_logger
 from coagent.runtimes import NATSRuntime
 
 translator = AgentSpec(
@@ -158,7 +158,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    set_stderr_logger()
+    init_logger()
     asyncio.run(main())
 ```
 

@@ -12,7 +12,7 @@ from coagent.core import (
     idle_loop,
     Message,
     new,
-    set_stderr_logger,
+    init_logger,
 )
 from coagent.runtimes import NATSRuntime, HTTPRuntime
 
@@ -54,7 +54,7 @@ async def main(server: str, auth: str):
 
 
 if __name__ == "__main__":
-    set_stderr_logger("TRACE")
+    init_logger("TRACE")
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--server", type=str, default="nats://localhost:4222")

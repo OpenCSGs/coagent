@@ -2,7 +2,7 @@ import argparse
 import asyncio
 
 from coagent.agents import ChatAgent, RunContext, submit, tool
-from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
+from coagent.core import AgentSpec, idle_loop, new, init_logger
 from coagent.runtimes import NATSRuntime
 
 import httpx
@@ -41,7 +41,7 @@ async def main(name: str):
 
 
 if __name__ == "__main__":
-    set_stderr_logger("TRACE")
+    init_logger("TRACE")
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", type=str, default="dataflow")

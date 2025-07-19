@@ -1,7 +1,7 @@
 import asyncio
 
 from coagent.agents import ChatAgent, ModelClient
-from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
+from coagent.core import AgentSpec, idle_loop, new, init_logger
 from coagent.runtimes import NATSRuntime
 from pydantic import BaseModel
 
@@ -39,5 +39,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    set_stderr_logger()
+    init_logger()
     asyncio.run(main())

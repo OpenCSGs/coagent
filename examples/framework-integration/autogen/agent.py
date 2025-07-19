@@ -9,7 +9,7 @@ from coagent.core import (
     handler,
     idle_loop,
     new,
-    set_stderr_logger,
+    init_logger,
 )
 from coagent.runtimes import NATSRuntime
 
@@ -71,5 +71,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    set_stderr_logger("TRACE")
+    init_logger("TRACE")
     asyncio.run(main())

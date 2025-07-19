@@ -1,7 +1,7 @@
 import asyncio
 
 from coagent.agents import ChatAgent
-from coagent.core import AgentSpec, idle_loop, new, set_stderr_logger
+from coagent.core import AgentSpec, idle_loop, new, init_logger
 from coagent.runtimes import NATSRuntime
 
 
@@ -21,6 +21,6 @@ async def main():
 
 
 if __name__ == "__main__":
-    set_stderr_logger("TRACE")
+    init_logger("TRACE")
 
     asyncio.run(main())

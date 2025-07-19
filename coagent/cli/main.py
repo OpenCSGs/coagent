@@ -5,7 +5,7 @@ import uuid
 
 import jq
 
-from coagent.core import Address, RawMessage, set_stderr_logger
+from coagent.core import Address, RawMessage, init_logger
 from coagent.core.exceptions import BaseError
 from coagent.runtimes import NATSRuntime, HTTPRuntime
 
@@ -153,7 +153,7 @@ def main():
         args.oneline = True
         args.filter = ".content.content"
 
-    set_stderr_logger(args.level)
+    init_logger(args.level)
     msg = make_msg(args.header, args.data)
     asyncio.run(
         run(

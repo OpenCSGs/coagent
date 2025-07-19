@@ -11,7 +11,7 @@ from coagent.core import (
     logger,
     Message,
     new,
-    set_stderr_logger,
+    init_logger,
 )
 from coagent.core.messages import ControlMessage
 from coagent.runtimes import NATSRuntime
@@ -133,5 +133,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    set_stderr_logger()
+    init_logger()
     asyncio.run(main())

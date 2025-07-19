@@ -3,7 +3,7 @@ import os
 
 from coagent.agents import ChatAgent, Sequential, ModelClient
 from coagent.agents.messages import ChatMessage
-from coagent.core import AgentSpec, new, set_stderr_logger
+from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import LocalRuntime
 
 client = ModelClient(
@@ -106,5 +106,5 @@ Operating margin improved to 34%.\
 
 
 if __name__ == "__main__":
-    set_stderr_logger()
+    init_logger()
     asyncio.run(main())

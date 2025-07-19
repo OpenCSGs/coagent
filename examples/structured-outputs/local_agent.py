@@ -1,7 +1,7 @@
 import asyncio
 
 from coagent.agents import ChatAgent, ChatMessage, ModelClient, StructuredOutput
-from coagent.core import AgentSpec, new, set_stderr_logger
+from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import LocalRuntime
 from pydantic import BaseModel
 
@@ -55,5 +55,5 @@ of friends in JSON format",
 
 
 if __name__ == "__main__":
-    set_stderr_logger()
+    init_logger()
     asyncio.run(main())

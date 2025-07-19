@@ -9,7 +9,7 @@ from coagent.core import (
     handler,
     idle_loop,
     new,
-    set_stderr_logger,
+    init_logger,
 )
 from coagent.runtimes import NATSRuntime, HTTPRuntime
 
@@ -36,7 +36,7 @@ async def main(name: str, description: str, server: str):
 
 
 if __name__ == "__main__":
-    set_stderr_logger("TRACE")
+    init_logger("TRACE")
 
     parser = argparse.ArgumentParser()
     parser.add_argument("name", type=str)
