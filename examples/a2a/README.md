@@ -40,6 +40,17 @@ Run the A2A test client:
 python examples/a2a/client.py --url=http://localhost:8000/agents/translator
 ```
 
+Or communicate with the agent using the [ca2a](https://github.com/RussellLuo/ca2a) CLI:
+
+```bash
+ca2a http://localhost:8000/agents/translator message/send message:='{
+  "role": "user",
+  "parts": [{"kind": "text", "text": "你好"}],
+  "messageId": "msg_123",
+  "taskId": "task_123"
+}'
+```
+
 ### Convert A2A agents to Coagent agents
 
 Run A2A agent (see [Helloworld Example](https://github.com/a2aproject/a2a-python#helloworld-example)):
