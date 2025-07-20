@@ -7,7 +7,6 @@ from coagent.core import (
     BaseAgent,
     Context,
     handler,
-    idle_loop,
     new,
     init_logger,
 )
@@ -67,7 +66,7 @@ agent = AgentSpec("agent", new(AutoGenWeatherAgent))
 async def main():
     async with NATSRuntime.from_servers() as runtime:
         await runtime.register(agent)
-        await idle_loop()
+        await runtime.wait_for_shutdown()
 
 
 if __name__ == "__main__":

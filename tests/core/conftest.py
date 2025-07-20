@@ -5,7 +5,7 @@ import inspect
 import pytest
 
 from coagent.core.types import Agent
-from coagent.core.util import idle_loop
+from coagent.core.util import wait_for_shutdown
 from coagent.core.runtime import NopChannel
 from coagent.runtimes.local_runtime import LocalChannel
 
@@ -47,7 +47,7 @@ def run_agent_in_task(agent: Agent) -> asyncio.Task:
 
     async def run():
         await agent.start()
-        await idle_loop()
+        await wait_for_shutdown()
         await agent.stop()
 
     return asyncio.create_task(run())

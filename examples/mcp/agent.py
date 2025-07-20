@@ -2,7 +2,7 @@ import asyncio
 
 from coagent.agents import MCPAgent
 from coagent.agents.mcp_agent import Prompt
-from coagent.core import AgentSpec, idle_loop, new, init_logger
+from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import NATSRuntime
 
 
@@ -19,7 +19,7 @@ mcp = AgentSpec(
 async def main():
     async with NATSRuntime.from_servers() as runtime:
         await runtime.register(mcp)
-        await idle_loop()
+        await runtime.wait_for_shutdown()
 
 
 if __name__ == "__main__":

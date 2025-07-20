@@ -7,7 +7,6 @@ from coagent.core import (
     Context,
     GenericMessage,
     handler,
-    idle_loop,
     new,
     init_logger,
 )
@@ -32,7 +31,7 @@ async def main(name: str, description: str, server: str):
 
     async with runtime:
         await runtime.register(employee)
-        await idle_loop()
+        await runtime.wait_for_shutdown()
 
 
 if __name__ == "__main__":

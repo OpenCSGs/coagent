@@ -21,4 +21,3 @@ from .types import (
     Reply,
     Subscription,
 )
-from .util import idle_loop

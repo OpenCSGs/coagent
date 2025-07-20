@@ -1,7 +1,7 @@
 import asyncio
 
 from coagent.agents import ChatAgent, Model
-from coagent.core import AgentSpec, idle_loop, new, init_logger
+from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import NATSRuntime
 from pydantic import BaseModel
 
@@ -35,7 +35,7 @@ structured = AgentSpec(
 async def main():
     async with NATSRuntime.from_servers() as runtime:
         await runtime.register(structured)
-        await idle_loop()
+        await runtime.wait_for_shutdown()
 
 
 if __name__ == "__main__":

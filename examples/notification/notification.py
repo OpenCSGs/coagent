@@ -7,7 +7,6 @@ from coagent.core import (
     BaseAgent,
     Context,
     handler,
-    idle_loop,
     logger,
     Message,
     new,
@@ -129,7 +128,7 @@ async def main():
     async with NATSRuntime.from_servers() as runtime:
         await runtime.register(proxy)
         await runtime.register(center)
-        await idle_loop()
+        await runtime.wait_for_shutdown()
 
 
 if __name__ == "__main__":

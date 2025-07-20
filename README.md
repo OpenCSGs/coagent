@@ -138,7 +138,7 @@ import asyncio
 import os
 
 from coagent.agents import ChatAgent, Model
-from coagent.core import AgentSpec, idle_loop, new, init_logger
+from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import NATSRuntime
 
 translator = AgentSpec(
@@ -154,7 +154,7 @@ translator = AgentSpec(
 async def main():
     async with NATSRuntime.from_servers("nats://localhost:4222") as runtime:
         await runtime.register(translator)
-        await idle_loop()
+        await runtime.wait_for_shutdown()
 
 
 if __name__ == "__main__":

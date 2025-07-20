@@ -65,18 +65,13 @@ async def clear_queue(queue: asyncio.Queue) -> None:
             break
 
 
-async def idle_loop():
-    try:
-        stop_event = asyncio.Event()
+async def wait_for_shutdown(timeout: float | None = None) -> None:
+    shutdown_event = asyncio.Event()
 
-        loop = asyncio.get_event_loop()
-        loop.add_signal_handler(signal.SIGINT, stop_event.set)
+    loop = asyncio.get_event_loop()
+    loop.add_signal_handler(signal.SIGINT, shutdown_event.set)
 
-        while not stop_event.is_set():
-            await asyncio.sleep(1)
-
-    except asyncio.CancelledError:
-        pass
+    await asyncio.wait_for(shutdown_event.wait(), timeout)
 
 
 def exit_loop():

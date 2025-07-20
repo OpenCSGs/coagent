@@ -12,7 +12,7 @@ from coagent.core import (
     new,
     init_logger,
 )
-from coagent.core.util import idle_loop, pretty_trace_agent_output
+from coagent.core.util import pretty_trace_agent_output
 from coagent.runtimes import NATSRuntime
 
 
@@ -65,7 +65,7 @@ dev = AgentSpec("dev", new(DevEngineer))
 async def main():
     async with NATSRuntime.from_servers() as runtime:
         await runtime.register(dev)
-        await idle_loop()
+        await runtime.wait_for_shutdown()
 
 
 if __name__ == "__main__":

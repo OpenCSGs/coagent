@@ -6,7 +6,6 @@ from coagent.core import (
     BaseAgent,
     Context,
     handler,
-    idle_loop,
     Message,
     new,
     init_logger,
@@ -44,7 +43,7 @@ async def main(server: str, auth: str):
 
     async with runtime:
         await runtime.register(pong_server)
-        await idle_loop()
+        await runtime.wait_for_shutdown()
 
 
 if __name__ == "__main__":

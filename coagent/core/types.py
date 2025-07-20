@@ -325,6 +325,11 @@ class Runtime(abc.ABC):
         pass
 
     @abc.abstractmethod
+    async def wait_for_shutdown(self, timeout: float | None = None) -> None:
+        """Wait for the shutdown event with a timeout."""
+        pass
+
+    @abc.abstractmethod
     async def register(self, spec: AgentSpec) -> None:
         pass
 

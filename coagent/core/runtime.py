@@ -16,6 +16,7 @@ from .types import (
     RawMessage,
     Subscription,
 )
+from .util import wait_for_shutdown
 
 
 class BaseRuntime(Runtime):
@@ -36,6 +37,9 @@ class BaseRuntime(Runtime):
         await self._discovery.stop()
         await self.deregister()
         await self._channel.close()
+
+    async def wait_for_shutdown(self, timeout: float | None = None) -> None:
+        await wait_for_shutdown(timeout)
 
     async def register(self, spec: AgentSpec) -> None:
         spec.register(self)

@@ -4,7 +4,7 @@ from enum import Enum
 
 from coagent.agents import ChatAgent, confirm, RunContext, tool
 from coagent.agents.messages import ChatMessage
-from coagent.core import AgentSpec, idle_loop, new, init_logger
+from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import NATSRuntime
 
 import httpx
@@ -61,7 +61,7 @@ async def main(name: str):
     csghub = AgentSpec(name, new(CSGHub))
     async with NATSRuntime.from_servers() as runtime:
         await runtime.register(csghub)
-        await idle_loop()
+        await runtime.wait_for_shutdown()
 
 
 if __name__ == "__main__":
