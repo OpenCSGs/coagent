@@ -6,7 +6,7 @@ from .agent import (
 )
 from .discovery import DiscoveryQuery, DiscoveryReply
 from .logger import logger, init_logger
-from .messages import Message, GenericMessage, SetReplyInfo, StopIteration
+from .messages import GenericMessage, Message, SetReplyInfo, StopIteration
 from .runtime import BaseRuntime, BaseChannel, QueueSubscriptionIterator
 from .types import (
     Address,
@@ -16,7 +16,6 @@ from .types import (
     Channel,
     MessageHeader,
     new,
-    NO_REPLY,
     RawMessage,
     Reply,
     Subscription,

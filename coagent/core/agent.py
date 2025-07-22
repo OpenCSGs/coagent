@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import inspect
 import time
@@ -22,7 +24,6 @@ from .types import (
     Address,
     Agent,
     Channel,
-    NO_REPLY,
     RawMessage,
     Reply,
     State,
@@ -38,41 +39,59 @@ def get_type_name(typ: Type[Any]) -> str:
     return f"{typ.__module__}.{typ.__qualname__}"
 
 
-def handler(func):
+def handler(func: Callable | None = None, deferred: bool = False) -> Callable:
     """Decorator to mark the given function as a message handler.
 
     This decorator is typically used on methods of an agent class, and the method must have 3 arguments:
         1. `self`
         2. `msg`: The message to be handled, this must be type-hinted with the message type that it is intended to handle.
         3. `ctx`: A Context object.
+
+    Args:
+        func: The function to be decorated.
+        deferred: Whether the reply from the decorated message handler will be deferred.
+
+            This is mainly used by message handlers that want to send a reply
+            in a different way, rather than directly returning it.
+
+            Example scenarios:
+            - Message handlers of orchestration agents who delegate the reply handling to other agents.
+            - Message handlers that process blocking tasks in a separate coroutine and send replies there.
     """
-    hints = get_type_hints(func)
-    return_type = hints.pop("return", None)  # Ignore the return type.
-    if len(hints) != 2:
-        raise AssertionError(
-            "The handler method must have 3 arguments: (self, msg, ctx)"
-        )
 
-    params = list(hints.items())
-    msg_name, msg_type = params[0]
-    ctx_name, ctx_type = params[1]
+    def decorator(func: Callable) -> Callable:
+        hints = get_type_hints(func)
+        return_type = hints.pop("return", None)  # Ignore the return type.
+        if len(hints) != 2:
+            raise AssertionError(
+                "The handler method must have 3 arguments: (self, msg, ctx)"
+            )
 
-    if not issubclass(msg_type, Message):
-        want, got = get_type_name(Message), get_type_name(msg_type)
-        raise AssertionError(
-            f"The argument '{msg_name}' must be type-hinted with a subclass of `{want}` type (got `{got}`)"
-        )
+        params = list(hints.items())
+        msg_name, msg_type = params[0]
+        ctx_name, ctx_type = params[1]
 
-    if ctx_type is not Context:
-        want, got = get_type_name(Context), get_type_name(ctx_type)
-        raise AssertionError(
-            f"The argument '{ctx_name}' must be type-hinted with a `{want}` type (got `{got}`)"
-        )
+        if not issubclass(msg_type, Message):
+            want, got = get_type_name(Message), get_type_name(msg_type)
+            raise AssertionError(
+                f"The argument '{msg_name}' must be type-hinted with a subclass of `{want}` type (got `{got}`)"
+            )
 
-    func.is_message_handler = True
-    func.target_message_type = msg_type
-    func.return_type = get_return_type(return_type)
-    return func
+        if ctx_type is not Context:
+            want, got = get_type_name(Context), get_type_name(ctx_type)
+            raise AssertionError(
+                f"The argument '{ctx_name}' must be type-hinted with a `{want}` type (got `{got}`)"
+            )
+
+        func.is_message_handler = True
+        func.target_message_type = msg_type
+        func.return_type = get_return_type(return_type)
+        func.is_reply_deferred = deferred
+        return func
+
+    if func is None:
+        return decorator
+    return decorator(func)
 
 
 def get_return_type(typ: Type[Any]) -> Type[Any]:
@@ -94,6 +113,114 @@ class Operation(BaseModel):
     description: str
     message: dict
     reply: dict
+
+
+class Replier:
+    """Replier is a helper used to handle message replies for the associated agent."""
+
+    def __init__(self, agent: BaseAgent):
+        # The associated agent.
+        self._agent: BaseAgent = agent
+
+        self._reply: Reply | None = None
+        self._reply_lock: asyncio.Lock = asyncio.Lock()
+
+    async def set_destination(self, reply: Reply) -> None:
+        # Normally this operation is triggered by an orchestration agent
+        # by sending a `SetReplyInfo` message to the associated agent.
+        async with self._reply_lock:
+            self._reply = reply
+
+    async def get_destination(self) -> Reply | None:
+        async with self._reply_lock:
+            return self._reply
+
+    async def send_to(
+        self, dst: Reply, result: Message | Awaitable[Message] | AsyncIterator[Message]
+    ) -> None:
+        """Send the result to the given destination."""
+
+        async def pub(msg: Message) -> None:
+            if dst:
+                await self._agent.channel.publish(dst.address, msg.encode())
+
+        async def pub_exc(exc: BaseException) -> None:
+            err = InternalError.from_exception(exc)
+            await pub(err.encode_message())
+
+        if dst and dst.stream:  # Streaming mode
+            try:
+                if is_async_iterator(result):
+                    async for msg in result:
+                        await pub(msg)
+                elif inspect.isawaitable(result):
+                    msg = await result or Empty()
+                    await pub(msg)
+                else:
+                    await pub(result)
+            except asyncio.CancelledError as exc:
+                await pub_exc(exc)
+                raise
+            except Exception as exc:
+                await pub_exc(exc)
+            finally:
+                # End of the iteration, send an extra StopIteration message.
+                await pub(StopIteration())
+        else:  # None, Deferred, or non-streaming
+            try:
+                if is_async_iterator(result):
+                    accumulated: RawMessage | None = None
+                    async for msg in result:
+                        if not accumulated:
+                            accumulated = msg
+                        else:
+                            try:
+                                accumulated += msg
+                            except TypeError:
+                                await pub_exc(StreamError("Streaming mode is required"))
+                    await pub(accumulated)
+                elif inspect.isawaitable(result):
+                    msg = await result or Empty()
+                    await pub(msg)
+                else:
+                    await pub(result)
+            except asyncio.CancelledError as exc:
+                await pub_exc(exc)
+                raise
+            except Exception as exc:
+                await pub_exc(exc)
+
+    async def send(
+        self,
+        src: RawMessage | Message,
+        result: Message | Awaitable[Message] | AsyncIterator[Message],
+    ) -> bool:
+        """Send the result to the preset destination; if none is set, use the destination
+        provided in the source message instead.
+        """
+        dst = await self.get_destination() or src.reply
+        await self.send_to(dst, result)
+        return bool(dst)
+
+    async def raise_exc_to(
+        self,
+        dst: Reply,
+        exc: BaseException,
+    ) -> None:
+        """Convert the exception into a message and send it to the given destination."""
+        err = InternalError.from_exception(exc)
+        await self.send_to(dst, err.encode_message())
+
+    async def raise_exc(
+        self,
+        src: RawMessage | Message,
+        exc: BaseException,
+    ) -> bool:
+        """Convert the exception into a message and send it to the preset destination;
+        if none is set, use the destination provided in the source message instead.
+        """
+        err = InternalError.from_exception(exc)
+        return await self.send(src, err.encode_message())
 
 
 class BaseAgent(Agent):
@@ -132,9 +259,7 @@ class BaseAgent(Agent):
         # this would result in a lot of messages.
         self._last_msg_received_at_lock: asyncio.Lock = asyncio.Lock()
 
-        # Normally `reply` is set by an orchestration agent by sending a `SetReplyInfo` message.
-        self.reply: Reply | None = None
-        self._reply_lock: asyncio.Lock = asyncio.Lock()
+        self.replier = Replier(self)
 
         handlers, message_types = self.__collect_handlers()
         # A list of handlers that are registered to handle messages.
@@ -231,7 +356,7 @@ class BaseAgent(Agent):
             msg_type = self._message_types.get("GenericMessage")
             if not msg_type:
                 err = MessageDecodeError(f"message type '{msg_type_name}' not found")
-                sent = await self.__send_reply(raw.reply, err.encode_message())
+                sent = await self.replier.send(raw, err.encode_message())
                 if not sent:
                     logger.error(f"Failed to decode message: {err}")
                 return
@@ -240,7 +365,7 @@ class BaseAgent(Agent):
             msg = msg_type.decode(raw)
         except ValidationError as exc:
             err = MessageDecodeError(str(exc))
-            sent = await self.__send_reply(raw.reply, err.encode_message())
+            sent = await self.replier.send(raw, err.encode_message())
             if not sent:
                 logger.error(f"Failed to decode message: {err}")
             return
@@ -280,7 +405,7 @@ class BaseAgent(Agent):
                     await self.stopped()
 
                 case SetReplyInfo():
-                    await self._set_reply_info(msg.reply_info)
+                    await self.replier.set_destination(msg.reply_info)
 
                 case ProbeAgent() | Empty():
                     # Do not handle probes and empty messages.
@@ -292,81 +417,13 @@ class BaseAgent(Agent):
     async def _handle_data_custom(self, msg: Message, ctx: Context) -> None:
         """Handle user-defined DATA messages."""
         h: Handler = self.__get_handler(msg)
-        result = h(self, msg, ctx)
-        await self.__send_reply(msg.reply, result)
-
-    async def _get_reply_info(self) -> Reply | None:
-        async with self._reply_lock:
-            return self.reply
-
-    async def _set_reply_info(self, reply_info: Reply) -> None:
-        async with self._reply_lock:
-            self.reply = reply_info
-
-    async def __send_reply(
-        self,
-        in_msg_reply: Reply,
-        result: Message | Awaitable[Message] | AsyncIterator[Message],
-    ) -> bool:
-        reply = await self._get_reply_info() or in_msg_reply
-        await self.send_reply(reply, result)
-        sent = reply and reply is not NO_REPLY
-        return sent
-
-    async def send_reply(
-        self,
-        to: Reply,
-        result: Message | Awaitable[Message] | AsyncIterator[Message],
-    ) -> None:
-        async def pub(msg: Message):
-            if to and to is not NO_REPLY:
-                await self.channel.publish(to.address, msg.encode())
-
-        async def pub_exc(exc: BaseException):
-            err = InternalError.from_exception(exc)
-            await pub(err.encode_message())
-
-        if to and to.stream:  # Streaming mode
-            try:
-                if is_async_iterator(result):
-                    async for msg in result:
-                        await pub(msg)
-                elif inspect.isawaitable(result):
-                    msg = await result or Empty()
-                    await pub(msg)
-                else:
-                    await pub(result)
-            except asyncio.CancelledError as exc:
-                await pub_exc(exc)
-                raise
-            except Exception as exc:
-                await pub_exc(exc)
-            finally:
-                # End of the iteration, send an extra StopIteration message.
-                await pub(StopIteration())
-        else:  # None, NO_REPLY, or non-streaming
-            try:
-                if is_async_iterator(result):
-                    accumulated: RawMessage | None = None
-                    async for msg in result:
-                        if not accumulated:
-                            accumulated = msg
-                        else:
-                            try:
-                                accumulated += msg
-                            except TypeError:
-                                await pub_exc(StreamError("Streaming mode is required"))
-                    await pub(accumulated)
-                elif inspect.isawaitable(result):
-                    msg = await result or Empty()
-                    await pub(msg)
-                else:
-                    await pub(result)
-            except asyncio.CancelledError as exc:
-                await pub_exc(exc)
-                raise
-            except Exception as exc:
-                await pub_exc(exc)
+        if h.is_reply_deferred:
+            # We assume that the handler returns an Awaitable[None],
+            # and no need to send a reply here as it will be sent later.
+            await h(self, msg, ctx)
+        else:
+            result = h(self, msg, ctx)
+            await self.replier.send(msg, result)
 
     def __get_handler(self, msg: Message) -> Handler | None:
         msg_type: Type[Any] = type(msg)
