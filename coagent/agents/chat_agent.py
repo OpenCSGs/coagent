@@ -358,12 +358,17 @@ class ChatAgent(BaseAgent):
         all_tools = []
 
         for server in mcp_servers:
-            raw_result = await self.channel.publish(
-                Address(name=self.mcp_server_agent_type, id=server.name),
-                ListTools(connect=server.connect).encode(),
-                request=True,
-                timeout=10,
-            )
+            try:
+                raw_result = await self.channel.publish(
+                    Address(name=self.mcp_server_agent_type, id=server.name),
+                    ListTools(connect=server.connect).encode(),
+                    request=True,
+                    timeout=10,
+                )
+            except Exception as exc:
+                logger.error(f"Error listing tools: {exc}")
+                continue
+
             result = ListToolsResult.decode(raw_result)
 
             tools = [self._to_function_tool(server, t) for t in result.tools]

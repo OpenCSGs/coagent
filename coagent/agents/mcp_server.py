@@ -5,6 +5,7 @@ from contextlib import AbstractAsyncContextManager, AsyncExitStack
 from typing import Any, Literal
 from urllib.parse import urljoin
 
+import aiorwlock
 from coagent.core import BaseAgent, Context, handler, logger, Message
 from coagent.core.messages import Cancel
 from coagent.core.exceptions import InternalError
@@ -131,6 +132,8 @@ class MCPServer(BaseAgent):
         self._client_session: ClientSession | None = None
         self._exit_stack: AsyncExitStack = AsyncExitStack()
 
+        # The lock for protecting the following three cache-related variables.
+        self._cache_lock: aiorwlock.RWLock = aiorwlock.RWLock()
         self._list_tools_result_cache: ListToolsResult | None = None
         self._cache_enabled: bool = False
         self._cache_invalidated: bool = False
@@ -139,34 +142,20 @@ class MCPServer(BaseAgent):
         self._pending_tasks: set[asyncio.Task] = set()
 
     async def stopped(self) -> None:
-        await self._cleanup()
+        await self._close_client_session()
 
-    async def _handle_data(self) -> None:
-        """Override the method to handle exceptions properly."""
-        try:
-            await super()._handle_data()
-        finally:
-            # Ensure the resources are properly cleaned up.
-            await self._cleanup()
-
-    async def _handle_data_custom(self, msg: Message, ctx: Context) -> None:
-        """Override to handle `ListTools` and `CallTool` messages concurrently."""
-        match msg:
-            case ListTools() | CallTool():
-                # Connect to the MCP server if not already connected.
-                # Note that this operation must be performed in a sequential manner.
-                if not self._client_session and msg.connect:
-                    await self.connect(msg.connect, ctx)
-
-                task = asyncio.create_task(super()._handle_data_custom(msg, ctx))
-                self._pending_tasks.add(task)
-                task.add_done_callback(self._pending_tasks.discard)
-            case _:
-                await super()._handle_data_custom(msg, ctx)
+        if self._pending_tasks:
+            # Cancel all pending tasks.
+            for task in self._pending_tasks:
+                task.cancel()
+            self._pending_tasks.clear()
 
     @handler
     async def connect(self, msg: Connect, ctx: Context) -> None:
         """Connect to the server."""
+        if self._client_session:
+            return
+
         if msg.transport == "sse":
             ctx_manager: AbstractAsyncContextManager = sse_client(
                 **msg.params.normalize().model_dump()
@@ -183,60 +172,92 @@ class MCPServer(BaseAgent):
             await session.initialize()
 
             self._client_session = session
-            self._cache_enabled = msg.enable_cache
+            async with self._cache_lock.writer_lock:
+                self._cache_enabled = msg.enable_cache
         except Exception as exc:
             logger.error(f"Error initializing MCP server: {exc}")
-            await self._cleanup()
+            await self._close_client_session()
             raise
 
     @handler
     async def invalidate_cache(self, msg: InvalidateCache, ctx: Context) -> None:
-        self._cache_invalidated = True
+        async with self._cache_lock.writer_lock:
+            self._cache_invalidated = True
 
-    @handler
-    async def list_tools(self, msg: ListTools, ctx: Context) -> ListToolsResult:
+    @handler(deferred=True)
+    async def list_tools(self, msg: ListTools, ctx: Context) -> None:
         if not self._client_session:
-            raise InternalError(
-                "Server not initialized. Make sure to send the `Connect` message first."
-            )
+            try:
+                if msg.connect:
+                    # Connect to the MCP server if not already connected.
+                    # Note that this operation must be performed in a sequential manner.
+                    await self.connect(msg.connect, ctx)
+                else:
+                    raise InternalError(
+                        "Server not initialized. Make sure to send the `Connect` message first."
+                    )
+            except Exception as exc:
+                await self.replier.raise_exc(msg, exc)
 
+        async def run(msg: ListTools, ctx: Context) -> None:
+            await self.replier.send(msg, self._list_tools(msg, ctx))
+
+        # Handle `ListTools` messages concurrently.
+        task = asyncio.create_task(run(msg, ctx))
+        self._pending_tasks.add(task)
+        task.add_done_callback(self._pending_tasks.discard)
+
+    async def _list_tools(self, msg: ListTools, ctx: Context) -> ListToolsResult:
         # Return the cached result if the cache is enabled and not invalidated.
-        if (
-            self._cache_enabled
-            and not self._cache_invalidated
-            and self._list_tools_result_cache
-        ):
+        async with self._cache_lock.reader_lock:
+            if (
+                self._cache_enabled
+                and not self._cache_invalidated
+                and self._list_tools_result_cache
+            ):
+                return self._list_tools_result_cache
+
+        async with self._cache_lock.writer_lock:
+            # Reset the cache status.
+            self._cache_invalidated = False
+
+            result = await self._client_session.list_tools()
+            self._list_tools_result_cache = ListToolsResult(**result.model_dump())
             return self._list_tools_result_cache
 
-        # Reset the cache status.
-        self._cache_invalidated = False
-
-        result = await self._client_session.list_tools()
-        self._list_tools_result_cache = ListToolsResult(**result.model_dump())
-        return self._list_tools_result_cache
-
-    @handler
-    async def call_tool(self, msg: CallTool, ctx: Context) -> CallToolResult:
+    @handler(deferred=True)
+    async def call_tool(self, msg: CallTool, ctx: Context) -> None:
         if not self._client_session:
-            raise InternalError(
-                "Server not initialized. Make sure to send the `Connect` message first."
-            )
+            try:
+                if msg.connect:
+                    # Connect to the MCP server if not already connected.
+                    # Note that this operation must be performed in a sequential manner.
+                    await self.connect(msg.connect, ctx)
+                else:
+                    raise InternalError(
+                        "Server not initialized. Make sure to send the `Connect` message first."
+                    )
+            except Exception as exc:
+                await self.replier.raise_exc(msg, exc)
 
+        async def run(msg: ListTools, ctx: Context) -> None:
+            call_tool_result = await self._call_tool(msg, ctx)
+            await self.replier.send(msg, call_tool_result)
+
+        # Handle `CallTool` messages concurrently.
+        task = asyncio.create_task(run(msg, ctx))
+        self._pending_tasks.add(task)
+        task.add_done_callback(self._pending_tasks.discard)
+
+    async def _call_tool(self, msg: CallTool, ctx: Context) -> CallToolResult:
         result = await self._client_session.call_tool(msg.name, arguments=msg.arguments)
         return CallToolResult(**result.model_dump())
 
-    async def _cleanup(self) -> None:
-        """Cleanup the server."""
-        if self._pending_tasks:
-            # Cancel all pending tasks.
-            for task in self._pending_tasks:
-                task.cancel()
-
-        if not self._client_session:
-            return
-
+    async def _close_client_session(self) -> None:
+        """Cleanup the client session to server."""
         try:
             await self._exit_stack.aclose()
-            self._client_session = None
+            if self._client_session:
+                self._client_session = None
         except Exception as exc:
-            logger.error(f"Error cleaning up server: {exc}")
+            logger.error(f"Error closing client session: {exc}")

@@ -15,7 +15,7 @@ from coagent.core import Context
 class TestMCPServer:
     @pytest.mark.skipif(sys.platform == "win32", reason="Does not run on Windows.")
     @pytest.mark.asyncio
-    async def test_connect(self):
+    async def test_connect_ok(self):
         agent = MCPServer()
         ctx = Context()
 
@@ -30,6 +30,12 @@ class TestMCPServer:
             ),
             ctx,
         )
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="Does not run on Windows.")
+    @pytest.mark.asyncio
+    async def test_connect_err(self):
+        agent = MCPServer()
+        ctx = Context()
 
         # Connect error
         with pytest.raises(Exception) as exc:
@@ -65,7 +71,7 @@ class TestMCPServer:
             ctx,
         )
 
-        result = await agent.list_tools(ListTools(), ctx)
+        result = await agent._list_tools(ListTools(), ctx)
         assert len(result.tools) == 2
 
         # Validate tool query_weather
@@ -124,7 +130,7 @@ class TestMCPServer:
             ctx,
         )
 
-        result = await agent.call_tool(
+        result = await agent._call_tool(
             CallTool(
                 name="query_weather",
                 arguments={"city": "Beijing"},
