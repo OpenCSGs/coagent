@@ -200,7 +200,11 @@ class MCPServer(BaseAgent):
                 await self.replier.raise_exc(msg, exc)
 
         async def run(msg: ListTools, ctx: Context) -> None:
-            await self.replier.send(msg, self._list_tools(msg, ctx))
+            try:
+                list_tools_result = self._list_tools(msg, ctx)
+                await self.replier.send(msg, list_tools_result)
+            except Exception as exc:
+                await self.replier.raise_exc(msg, exc)
 
         # Handle `ListTools` messages concurrently.
         task = asyncio.create_task(run(msg, ctx))
@@ -241,8 +245,11 @@ class MCPServer(BaseAgent):
                 await self.replier.raise_exc(msg, exc)
 
         async def run(msg: ListTools, ctx: Context) -> None:
-            call_tool_result = await self._call_tool(msg, ctx)
-            await self.replier.send(msg, call_tool_result)
+            try:
+                call_tool_result = await self._call_tool(msg, ctx)
+                await self.replier.send(msg, call_tool_result)
+            except Exception as exc:
+                await self.replier.raise_exc(msg, exc)
 
         # Handle `CallTool` messages concurrently.
         task = asyncio.create_task(run(msg, ctx))
