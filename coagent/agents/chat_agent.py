@@ -25,6 +25,7 @@ from .mcp_server import (
     MCPTool,
     NamedMCPServer,
 )
+from .memory import Memory, NoMemory
 from .messages import ChatMessage, ChatHistory, StructuredOutput
 from .model import default_model, Model
 from .util import is_user_confirmed
@@ -222,6 +223,7 @@ class ChatAgent(BaseAgent):
         mcp_servers: list[NamedMCPServer] | None = None,
         mcp_server_agent_type: str = "mcp_server",
         model: Model = default_model,
+        memory: Memory | None = None,
         timeout: float = 300,
     ):
         super().__init__(timeout=timeout)
@@ -236,6 +238,7 @@ class ChatAgent(BaseAgent):
         self._swarm_client: Swarm = Swarm(self.model)
         self._swarm_agent: SwarmAgent | None = None
 
+        self._memory: Memory = memory or NoMemory()
         self._history: ChatHistory = ChatHistory(messages=[])
 
     @property
@@ -267,6 +270,10 @@ class ChatAgent(BaseAgent):
     def model(self) -> Model:
         return self._model
 
+    @property
+    def memory(self) -> Memory:
+        return self._memory
+
     async def stopped(self) -> None:
         for server in self.mcp_servers:
             if server.connect is not None:
@@ -286,7 +293,7 @@ class ChatAgent(BaseAgent):
         if model_id:
             # We assume that non-empty model ID indicates the use of a dynamic model client.
             model = Model(
-                model=model_id,
+                id=model_id,
                 base_url=extensions.get("model_base_url", ""),
                 api_key=extensions.get("model_api_key", ""),
                 api_version=extensions.get("model_api_version", ""),
@@ -319,6 +326,7 @@ class ChatAgent(BaseAgent):
 
     async def agent(self, agent_type: str) -> AsyncIterator[ChatMessage]:
         """The candidate agent to delegate the conversation to."""
+        # TODO: Handle memory?
         async for chunk in Delegate(self, agent_type).handle(self._history):
             yield chunk
 
@@ -326,6 +334,7 @@ class ChatAgent(BaseAgent):
     async def handle_history(
         self, msg: ChatHistory, ctx: Context
     ) -> AsyncIterator[ChatMessage]:
+        # TODO: Handle memory?
         response = self._handle_history(msg)
         async for resp in response:
             yield resp
@@ -334,15 +343,25 @@ class ChatAgent(BaseAgent):
     async def handle_message(
         self, msg: ChatMessage, ctx: Context
     ) -> AsyncIterator[ChatMessage]:
-        history = ChatHistory(messages=[msg])
+        existing = await self.memory.get_items()
+        history = ChatHistory(messages=existing + [msg])
+
         response = self._handle_history(history)
+        full_content = ""
         async for resp in response:
             yield resp
+            full_content += resp.content
+
+        await self.memory.add_items(
+            msg,  # input item
+            ChatMessage(role="assistant", content=full_content),  # output item
+        )
 
     @handler
     async def handle_structured_output(
         self, msg: StructuredOutput, ctx: Context
     ) -> AsyncIterator[ChatMessage]:
+        # TODO: Handle memory?
         match msg.input:
             case ChatMessage():
                 history = ChatHistory(messages=[msg.input])
