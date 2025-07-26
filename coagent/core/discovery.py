@@ -77,6 +77,18 @@ class DiscoveryReply(Message):
     agents: list[Schema]
 
 
+class DiscoveryBatchQuery(Message):
+    """A message to batch discover agents across multiple namespaces."""
+
+    queries: list[DiscoveryQuery]
+
+
+class DiscoveryBatchReply(Message):
+    """A reply message to a batch discovering message."""
+
+    replies: list[DiscoveryReply]
+
+
 class SubscribeToAgentUpdates(Message):
     """A message to subscribe to updates on the registration and deregistration
     of agents that match the given query.
@@ -163,20 +175,34 @@ class Discovery(BaseAgent):
     @handler
     async def discover(self, msg: DiscoveryQuery, ctx: Context) -> DiscoveryReply:
         """Discover agents in a given namespace in a distributed manner."""
+        batch_query = DiscoveryBatchQuery(
+            reply=msg.reply,
+            extensions=msg.extensions,
+            queries=[msg],
+        )
+        batch_reply = await self.batch_discover(batch_query)
+        return batch_reply.results[0]
+
+    @handler
+    async def batch_discover(
+        self, msg: DiscoveryBatchQuery, ctx: Context
+    ) -> DiscoveryBatchReply:
+        """Batch discover agents across multiple namespaces in a distributed manner."""
         lock: asyncio.Lock = asyncio.Lock()
-        agents: dict[str, Schema] = {}
+        batch_agents: list[dict[str, Schema]] = [{} for _ in range(len(msg.queries))]
 
         # TODO: Use QueueSubscriptionIterator to simplify this.
         async def receive(raw: RawMessage) -> None:
             # Gather
-            reply = DiscoveryReply.decode(raw)
-            if not reply.agents:
+            batch_reply = DiscoveryBatchReply.decode(raw)
+            if not any(bool(r.agents) for r in batch_reply.replies):
                 return
 
             await lock.acquire()
             try:
-                for agent in reply.agents:
-                    agents[agent.name] = agent
+                for i, reply in enumerate(batch_reply.replies):
+                    for agent in reply.agents:
+                        batch_agents[i][agent.name] = agent
             finally:
                 lock.release()
 
@@ -200,8 +226,11 @@ class Discovery(BaseAgent):
         finally:
             await sub.unsubscribe()
 
-            sorted_agents = sorted(agents.values())
-            return DiscoveryReply(agents=sorted_agents)
+            replies = []
+            for agents in batch_agents:
+                sorted_agents = sorted(agents.values())
+                replies.append(DiscoveryReply(agents=sorted_agents))
+            return DiscoveryBatchReply(replies=replies)
 
     @handler
     async def subscribe_to_agent_updates(
@@ -338,7 +367,16 @@ class DiscoveryServer(BaseAgent):
         return _SynchronizeReply(subscriptions=subscriptions)
 
     @handler
-    async def search(self, msg: DiscoveryQuery, ctx: Context) -> DiscoveryReply:
+    async def batch_search(
+        self, msg: DiscoveryBatchQuery, ctx: Context
+    ) -> DiscoveryBatchReply:
+        replies: list[DiscoveryReply] = []
+        for query in msg.queries:
+            result = await self._search(query, ctx)
+            replies.append(result)
+        return DiscoveryBatchReply(replies=replies)
+
+    async def _search(self, msg: DiscoveryQuery, ctx: Context) -> DiscoveryReply:
         """
         Examples:
 
