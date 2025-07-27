@@ -1,16 +1,16 @@
 import argparse
 import asyncio
 
-from coagent.agents import DynamicTriage
-from coagent.core import AgentSpec, new, init_logger
+from coagent.agents import Triage
+from coagent.core import AgentSpec, new, init_logger, DiscoveryQuery
 from coagent.runtimes import NATSRuntime
 
 
-class OpenCSG(DynamicTriage):
+class OpenCSG(Triage):
     """OpenCSG Triage Agent."""
 
     system = "You are a triage agent with a series of tools for different tasks." ""
-    namespace = ""
+    dynamic_agents = [DiscoveryQuery(namespace="")]
 
 
 opencsg = AgentSpec("opencsg", new(OpenCSG))
@@ -26,8 +26,8 @@ if __name__ == "__main__":
     init_logger("TRACE")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--namespace", type=str, default="")
+    parser.add_argument("namespace", type=str, default="")
     args = parser.parse_args()
 
-    OpenCSG.namespace = args.namespace
+    OpenCSG.dynamic_agents[0].namespace = args.namespace
     asyncio.run(main())

@@ -5,8 +5,9 @@ from coagent.core import (
     Address,
     BaseAgent,
     Context,
+    DiscoveryBatchQuery,
+    DiscoveryBatchReply,
     DiscoveryQuery,
-    DiscoveryReply,
     handler,
     logger,
     Message,
@@ -29,24 +30,33 @@ class UpdateSubAgents(Message):
     agents: list[Schema]
 
 
-class DynamicTriage(BaseAgent):
-    """A triage agent that dynamically discovers its sub-agents and delegates conversation to these sub-agents."""
+class Triage(BaseAgent):
+    """A triage agent that delegates conversation to its sub-agents.
+
+    Args:
+        name: The name of the agent.
+        system: The system instruction for the agent.
+        static_agents: A list of static agent names to delegate to.
+        dynamic_agents: A list of queries to dynamically discover agents to delegate to.
+        model: The model to use for generating responses.
+        timeout: The timeout for the agent.
+    """
 
     def __init__(
         self,
         name: str = "",
         system: str = "",
-        namespace: str = "",
-        inclusive: bool = False,
         model: Model = default_model,
+        static_agents: list[str] | None = None,
+        dynamic_agents: list[DiscoveryQuery] | None = None,
         timeout: float = 300,
     ):
         super().__init__(timeout=timeout)
 
         self._name: str = name
         self._system: str = system
-        self._namespace: str = namespace
-        self._inclusive: bool = inclusive
+        self._static_agents: list[str] | None = static_agents
+        self._dynamic_agents: list[DiscoveryQuery] | None = dynamic_agents
         self._model: Model = model
 
         self._swarm_client = Swarm(self.model)
@@ -70,18 +80,16 @@ class DynamicTriage(BaseAgent):
         return self._system
 
     @property
-    def namespace(self) -> str:
-        """The namespace for this agent."""
-        return self._namespace
-
-    @property
-    def inclusive(self) -> bool:
-        """Whether to include the agent whose name equals to the namespace."""
-        return self._inclusive
-
-    @property
     def model(self) -> Model:
         return self._model
+
+    @property
+    def static_agents(self) -> list[str] | None:
+        return self._static_agents
+
+    @property
+    def dynamic_agents(self) -> list[DiscoveryQuery] | None:
+        return self._dynamic_agents
 
     def get_swarm_client(self, extensions: dict) -> Swarm:
         """Get the swarm client with the given message extensions.
@@ -92,7 +100,7 @@ class DynamicTriage(BaseAgent):
         if model_id:
             # We assume that non-empty model ID indicates the use of a dynamic model.
             model = Model(
-                model=model_id,
+                id=model_id,
                 base_url=extensions.get("model_base_url", ""),
                 api_key=extensions.get("model_api_key", ""),
                 api_version=extensions.get("model_api_version", ""),
@@ -131,24 +139,44 @@ class DynamicTriage(BaseAgent):
     async def start(self) -> None:
         await super().start()
 
-        query = DiscoveryQuery(
-            namespace=self.namespace,
-            inclusive=self.inclusive,
-        )
-        msg = SubscribeToAgentUpdates(sender=self.address, query=query)
-        await self.channel.publish(Address(name="discovery"), msg.encode(), probe=False)
+        all_queries: list[DiscoveryQuery] = []
+        if self.dynamic_agents:
+            all_queries.extend(self.dynamic_agents)
+
+            # Subscribe to updates for dynamic sub-agents.
+            msg = SubscribeToAgentUpdates(
+                sender=self.address, queries=self.dynamic_agents
+            )
+            await self.channel.publish(
+                Address(name="discovery"), msg.encode(), probe=False
+            )
+
+        if self.static_agents:
+            all_queries.extend(
+                [
+                    # Only query the agent whose name equals to the namespace.
+                    #
+                    # We assume that, apart from the agent itself, there are
+                    # no other sub-agents in this namespace.
+                    DiscoveryQuery(namespace=name, inclusive=True)
+                    for name in self.static_agents
+                ]
+            )
 
         # To make the newly-created triage agent immediately available,
-        # we must query its sub-agents once in advance.
+        # we must retrieve its static and dynamic sub-agents once in advance.
+        batch_query = DiscoveryBatchQuery(queries=all_queries)
         result: RawMessage = await self.channel.publish(
             Address(name="discovery"),
-            query.encode(),
+            batch_query.encode(),
             request=True,
             probe=False,
         )
-        reply: DiscoveryReply = DiscoveryReply.decode(result)
+        batch_reply: DiscoveryBatchReply = DiscoveryBatchReply.decode(result)
 
-        self._sub_agents = {agent.name: agent for agent in reply.agents}
+        self._sub_agents = {
+            agent.name: agent for reply in batch_reply.replies for agent in reply.agents
+        }
         await self._update_swarm_agent()
 
     async def stop(self) -> None:

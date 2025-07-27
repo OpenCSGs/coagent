@@ -97,7 +97,7 @@ class SubscribeToAgentUpdates(Message):
     sender: Address = Field(
         ..., description="The address of the agent initiating the subscription."
     )
-    query: DiscoveryQuery
+    queries: list[DiscoveryQuery]
 
 
 class UnsubscribeFromAgentUpdates(Message):
@@ -262,7 +262,9 @@ class _SynchronizeQuery(Message):
 class _SynchronizeReply(Message):
     """An internal reply message to a synchronize message."""
 
-    subscriptions: dict[str, DiscoveryQuery] = Field(description="Agent subscriptions.")
+    subscriptions: dict[str, list[DiscoveryQuery]] = Field(
+        description="Agent subscriptions."
+    )
 
 
 class DiscoveryServer(BaseAgent):
@@ -277,7 +279,7 @@ class DiscoveryServer(BaseAgent):
         super().__init__()
 
         self._agent_schemas: Trie = Trie(separator=SEPARATOR)
-        self._agent_subscriptions: dict[Address, DiscoveryQuery] = {}
+        self._agent_subscriptions: dict[Address, list[DiscoveryQuery]] = {}
 
     async def start(self) -> None:
         """Since discovery server is a special agent, we need to start it in a different way."""
@@ -290,9 +292,9 @@ class DiscoveryServer(BaseAgent):
         async def receive(raw: RawMessage) -> None:
             # Gather
             reply = _SynchronizeReply.decode(raw)
-            for topic, query in reply.subscriptions.items():
+            for topic, queries in reply.subscriptions.items():
                 addr = Address.from_topic(topic)
-                self._agent_subscriptions[addr] = query
+                self._agent_subscriptions[addr] = queries
 
         inbox = await self.channel.new_reply_topic()
         sub = await self.channel.subscribe(addr=Address(name=inbox), handler=receive)
@@ -324,8 +326,8 @@ class DiscoveryServer(BaseAgent):
         self._agent_schemas[spec.name] = schema
 
         # Notify all subscribers about the registration of the new agent.
-        for addr, query in self._agent_subscriptions.items():
-            if query.matches(spec.name):
+        for addr, queries in self._agent_subscriptions.items():
+            if any(query.matches(spec.name) for query in queries):
                 msg = AgentsRegistered(
                     agents=[Schema(name=schema.name, description=schema.description)]
                 )
@@ -344,8 +346,12 @@ class DiscoveryServer(BaseAgent):
             self._agent_schemas.clear()
 
         # Notify all subscribers about the deregistration of the involved agents.
-        for addr, query in self._agent_subscriptions.items():
-            matched_names = [name for name in candidate_names if query.matches(name)]
+        for addr, queries in self._agent_subscriptions.items():
+            matched_names = [
+                name
+                for name in candidate_names
+                if any(query.matches(name) for query in queries)
+            ]
             if matched_names:
                 msg = AgentsDeregistered(
                     agents=[Schema(name=name) for name in matched_names]
@@ -362,7 +368,7 @@ class DiscoveryServer(BaseAgent):
         self, msg: _SynchronizeQuery, ctx: Context
     ) -> _SynchronizeReply:
         subscriptions = {
-            addr.topic: query for addr, query in self._agent_subscriptions.items()
+            addr.topic: queries for addr, queries in self._agent_subscriptions.items()
         }
         return _SynchronizeReply(subscriptions=subscriptions)
 
@@ -460,7 +466,7 @@ class DiscoveryServer(BaseAgent):
     async def subscribe_to_agent_updates(
         self, msg: SubscribeToAgentUpdates, ctx: Context
     ) -> None:
-        self._agent_subscriptions[msg.sender] = msg.query
+        self._agent_subscriptions[msg.sender] = msg.queries
 
     @handler
     async def unsubscribe_from_agent_updates(

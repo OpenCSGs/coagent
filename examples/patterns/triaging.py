@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from coagent.agents import ChatAgent, ChatMessage, DynamicTriage, Model
+from coagent.agents import ChatAgent, ChatMessage, Triage, Model
 from coagent.core import AgentSpec, new, init_logger
 from coagent.runtimes import LocalRuntime
 
@@ -13,7 +13,7 @@ model = Model(
 )
 
 billing = AgentSpec(
-    "team.billing",  # Under the team namespace
+    "billing",
     new(
         ChatAgent,
         system="""\
@@ -31,7 +31,7 @@ Keep responses professional but friendly.\
 )
 
 account = AgentSpec(
-    "team.account",  # Under the team namespace
+    "account",
     new(
         ChatAgent,
         system="""\
@@ -51,10 +51,10 @@ Maintain a serious, security-focused tone.\
 triage = AgentSpec(
     "triage",
     new(
-        DynamicTriage,
+        Triage,
         system="""You are a triage agent who will delegate to sub-agents based on the conversation content.""",
         model=model,
-        namespace="team",  # Collect all sub-agents under the team namespace
+        static_agents=["billing", "account"],
     ),
 )
 

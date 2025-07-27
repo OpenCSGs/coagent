@@ -4,7 +4,12 @@ from .agent import (
     Context,
     handler,
 )
-from .discovery import DiscoveryQuery, DiscoveryReply
+from .discovery import (
+    DiscoveryBatchQuery,
+    DiscoveryBatchReply,
+    DiscoveryQuery,
+    DiscoveryReply,
+)
 from .logger import logger, init_logger
 from .messages import GenericMessage, Message, SetReplyInfo, StopIteration
 from .runtime import BaseRuntime, BaseChannel, QueueSubscriptionIterator

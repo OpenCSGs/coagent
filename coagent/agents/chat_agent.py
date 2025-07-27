@@ -141,8 +141,8 @@ Please fill in the input form below:
 class Delegate:
     """A delegate agent that helps to handle a specific task."""
 
-    def __init__(self, host_agent: ChatAgent, agent_type: str):
-        self.host_agent: ChatAgent = host_agent
+    def __init__(self, host_agent: BaseAgent, agent_type: str):
+        self.host_agent: BaseAgent = host_agent
         self.agent_type: str = agent_type
 
     async def handle(self, msg: ChatHistory) -> AsyncIterator[ChatMessage]:
@@ -470,7 +470,7 @@ class ChatAgent(BaseAgent):
         else:
             if is_reply_to_confirm_message:
                 user_confirmed = await is_user_confirmed(
-                    history.messages[-1].content, self.client
+                    history.messages[-1].content, self.model
                 )
 
         ctx.user_confirmed = user_confirmed

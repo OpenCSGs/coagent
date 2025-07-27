@@ -68,7 +68,7 @@ if __name__ == "__main__":
     init_logger("TRACE")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--name", type=str, default="csghub")
+    parser.add_argument("name", type=str, default="csghub")
     args = parser.parse_args()
 
     asyncio.run(main(args.name))

@@ -44,7 +44,7 @@ if __name__ == "__main__":
     init_logger("TRACE")
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--name", type=str, default="dataflow")
+    parser.add_argument("name", type=str, default="dataflow")
     args = parser.parse_args()
 
     asyncio.run(main(args.name))
