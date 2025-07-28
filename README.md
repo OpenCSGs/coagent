@@ -36,7 +36,7 @@ An open-source framework for building monolithic or distributed agentic systems,
         - [x] Sequential
         - [x] Parallel
     - [x] Dynamic orchestration
-        - [x] Dynamic Triage
+        - [x] Triage
         - [x] Handoffs (based on async Swarm)
 - [x] Support any LLM
 - [x] Support [Model Context Protocol][3] ([example](examples/mcp))
@@ -184,9 +184,29 @@ coagent translator -H type:ChatMessage --chat -d '{"role": "user", "content": "ä
 
 **Augmented LLM** is an LLM enhanced with augmentations such as retrieval, tools, and memory. Our current models can actively use these capabilitiesâ€”generating their own search queries, selecting appropriate tools, and determining what information to retain.
 
-<p align="center">
-<img src="assets/patterns-augmented-llm.png">
-</p>
+```mermaid
+flowchart LR
+    In([In]) --> ALLM[LLM] --> Out([Out])
+
+    subgraph ALLM[LLM]
+        LLM[LLM]
+        Retrieval[Retrieval]
+        Tools[Tools]
+        Memory[Memory]
+    end
+
+    LLM <-.-> Retrieval
+    LLM <-.-> Tools
+    LLM <-.-> Memory
+
+    style In fill:#ffb3ba,stroke-width:0px
+    style Out fill:#ffb3ba,stroke-width:0px
+    style LLM fill:#baffc9,stroke-width:0px
+    style Retrieval fill:#ccccff,stroke-width:0px
+    style Tools fill:#ccccff,stroke-width:0px
+    style Memory fill:#ccccff,stroke-width:0px
+    style ALLM fill:#fff,stroke:#000,stroke-width:1px,stroke-dasharray: 2 2
+```
 
 **Example** (see [examples/patterns/augmented_llm.py](examples/patterns/augmented_llm.py) for a runnable example):
 
@@ -212,9 +232,19 @@ assistant = AgentSpec("assistant", new(Assistant))
 
 **Chaining** decomposes a task into a sequence of steps, where each agent processes the output of the previous one.
 
-<p align="center">
-<img src="assets/patterns-chaining.png">
-</p>
+```mermaid
+flowchart LR
+    In([In]) --> Agent1[Agent 1]
+    Agent1 --> |Out1| Agent2[Agent 2]
+    Agent2 --> |Out2| Agent3[Agent 3]
+    Agent3 --> Out([Out])
+
+    style In fill:#ffb3ba,stroke-width:0px
+    style Out fill:#ffb3ba,stroke-width:0px
+    style Agent1 fill:#baffc9,stroke-width:0px
+    style Agent2 fill:#baffc9,stroke-width:0px
+    style Agent3 fill:#baffc9,stroke-width:0px
+```
 
 **When to use this workflow:** This workflow is ideal for situations where the task can be easily and cleanly decomposed into fixed subtasks. The main goal is to trade off latency for higher accuracy, by making each agent an easier task.
 
@@ -295,9 +325,25 @@ chain = AgentSpec(
 
 **Parallelization** distributes independent subtasks across multiple agents for concurrent processing.
 
-<p align="center">
-<img src="assets/patterns-parallelization.png">
-</p>
+```mermaid
+flowchart LR
+    In([In]) --> Agent1[Agent 1]
+    In --> Agent2[Agent 2]
+    In --> Agent3[Agent 3]
+
+    Agent1 --> Aggregator[Aggregator]
+    Agent2 --> Aggregator
+    Agent3 --> Aggregator
+
+    Aggregator --> Out([Out])
+
+    style In fill:#ffb3ba,stroke-width:0px
+    style Out fill:#ffb3ba,stroke-width:0px
+    style Agent1 fill:#baffc9,stroke-width:0px
+    style Agent2 fill:#baffc9,stroke-width:0px
+    style Agent3 fill:#baffc9,stroke-width:0px
+    style Aggregator fill:#ccccff,stroke-width:0px
+```
 
 **When to use this workflow:** Parallelization is effective when the divided subtasks can be parallelized for speed, or when multiple perspectives or attempts are needed for higher confidence results.
 
@@ -385,22 +431,36 @@ parallel = AgentSpec(
 
 **Triaging** classifies an input and directs it to a specialized followup agent. This workflow allows for separation of concerns, and building more specialized agents.
 
-<p align="center">
-<img src="assets/patterns-triaging.png">
-</p>
+```mermaid
+flowchart LR
+    In([In]) --> Triage[Triage]
+    Triage --> Agent1[Agent 1]
+    Triage -.-> Agent2[Agent 2]
+    Triage -.-> Agent3[Agent 3]
+    Agent1 --> Out([Out])
+    Agent2 -.-> Out
+    Agent3 -.-> Out
+
+    style In fill:#ffb3ba,stroke-width:0px
+    style Out fill:#ffb3ba,stroke-width:0px
+    style Triage fill:#baffc9,stroke-width:0px
+    style Agent1 fill:#baffc9,stroke-width:0px
+    style Agent2 fill:#baffc9,stroke-width:0px
+    style Agent3 fill:#baffc9,stroke-width:0px
+```
 
 **When to use this workflow:** This workflow works well for complex tasks where there are distinct categories that are better handled separately, and where classification can be handled accurately, either by an LLM (using Prompting or Function-calling) or a more traditional classification model/algorithm.
 
 **Example** (see [examples/patterns/triaging.py](examples/patterns/triaging.py) for a runnable example):
 
 ```python
-from coagent.agents import ChatAgent, DynamicTriage, Model
+from coagent.agents import ChatAgent, Triage, Model
 from coagent.core import AgentSpec, new
 
 model = Model(...)
 
 billing = AgentSpec(
-    "team.billing",  # Under the team namespace
+    "billing",
     new(
         ChatAgent,
         system="""\
@@ -418,7 +478,7 @@ Keep responses professional but friendly.\
 )
 
 account = AgentSpec(
-    "team.account",  # Under the team namespace
+    "account",
     new(
         ChatAgent,
         system="""\
@@ -438,10 +498,10 @@ Maintain a serious, security-focused tone.\
 triage = AgentSpec(
     "triage",
     new(
-        DynamicTriage,
+        Triage,
         system="""You are a triage agent who will delegate to sub-agents based on the conversation content.""",
         model=model,
-        namespace="team",  # Collect all sub-agents under the team namespace
+        static_agents=["billing", "account"],
     ),
 )
 ```
