@@ -23,6 +23,7 @@ from coagent.core.discovery import (
 
 from .aswarm import Agent as SwarmAgent, Swarm
 from .chat_agent import ChatHistory, ChatMessage, Delegate
+from .memory import Memory, NoMemory
 from .model import default_model, Model
 
 
@@ -47,6 +48,7 @@ class Triage(BaseAgent):
         name: str = "",
         system: str = "",
         model: Model = default_model,
+        memory: Memory | None = None,
         static_agents: list[str] | None = None,
         dynamic_agents: list[DiscoveryQuery] | None = None,
         timeout: float = 300,
@@ -64,6 +66,7 @@ class Triage(BaseAgent):
         self._sub_agents: dict[str, Schema] = {}
         self._swarm_agent: SwarmAgent | None = None
 
+        self._memory: Memory = memory or NoMemory()
         self._history: ChatHistory = ChatHistory(messages=[])
 
     @property
@@ -82,6 +85,10 @@ class Triage(BaseAgent):
     @property
     def model(self) -> Model:
         return self._model
+
+    @property
+    def memory(self) -> Memory:
+        return self._memory
 
     @property
     def static_agents(self) -> list[str] | None:
@@ -131,6 +138,7 @@ class Triage(BaseAgent):
 
     def _transfer_to_agent(self, agent_type: str):
         async def run() -> AsyncIterator[ChatMessage]:
+            # TODO: Handle memory?
             async for chunk in Delegate(self, agent_type).handle(self._history):
                 yield chunk
 
@@ -203,6 +211,7 @@ class Triage(BaseAgent):
     async def handle_history(
         self, msg: ChatHistory, ctx: Context
     ) -> AsyncIterator[ChatMessage]:
+        # TODO: Handle memory?
         response = self._handle_history(msg, ctx)
         async for resp in response:
             yield resp
@@ -211,10 +220,19 @@ class Triage(BaseAgent):
     async def handle_message(
         self, msg: ChatMessage, ctx: Context
     ) -> AsyncIterator[ChatMessage]:
-        history = ChatHistory(messages=[msg])
+        existing = await self.memory.get_items()
+        history = ChatHistory(messages=existing + [msg])
+
         response = self._handle_history(history, ctx)
+        full_content = ""
         async for resp in response:
             yield resp
+            full_content += resp.content
+
+        await self.memory.add_items(
+            msg,  # input item
+            ChatMessage(role="assistant", content=full_content),  # output item
+        )
 
     async def _handle_history(
         self, msg: ChatHistory, ctx: Context
