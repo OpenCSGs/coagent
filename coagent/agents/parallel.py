@@ -100,7 +100,7 @@ class Parallel(BaseAgent):
     @handler(deferred=True)
     async def handle(self, msg: GenericMessage, ctx: Context) -> None:
         if len(self._agent_types) == 0:
-            self.replier.raise_exc(msg, RuntimeError("No agent types provided."))
+            await self.replier.raise_exc(msg, RuntimeError("No agent types provided."))
             return
 
         # Let the aggregator agent reply to the sending agent, if asked.
@@ -113,7 +113,8 @@ class Parallel(BaseAgent):
         status = AggregationStatus.decode(result)
         if status.busy:
             # The aggregator agent is busy.
-            raise RuntimeError("Parallel agent is busy.")
+            await self.replier.raise_exc(msg, RuntimeError("Parallel agent is busy."))
+            return
 
         for agent_type in self._agent_types:
             addr = Address(name=agent_type, id=self.address.id)

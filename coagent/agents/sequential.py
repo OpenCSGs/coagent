@@ -30,7 +30,7 @@ class Sequential(BaseAgent):
     @handler(deferred=True)
     async def handle(self, msg: GenericMessage, ctx: Context) -> None:
         if len(self._agent_types) == 0:
-            self.replier.raise_exc(msg, RuntimeError("No agent types provided."))
+            await self.replier.raise_exc(msg, RuntimeError("No agent types provided."))
             return
 
         # Let the last agent reply to the sending agent, if asked.
