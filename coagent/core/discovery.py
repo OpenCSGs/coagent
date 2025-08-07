@@ -180,7 +180,7 @@ class Discovery(BaseAgent):
             extensions=msg.extensions,
             queries=[msg],
         )
-        batch_reply = await self.batch_discover(batch_query)
+        batch_reply = await self.batch_discover(batch_query, ctx)
         return batch_reply.results[0]
 
     @handler
