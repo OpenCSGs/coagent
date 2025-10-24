@@ -6,7 +6,7 @@ from typing import Any, Generic
 
 from typing_extensions import TypeVar
 
-from .types import FunctionToolCallProgressItem, ToolCallProgressItem, StreamEvent
+from .types import FunctionToolCallProgressItem, ToolCallProgressItem
 
 TData = TypeVar("TData", default=Any)
 

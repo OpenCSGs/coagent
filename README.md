@@ -507,6 +507,60 @@ triage = AgentSpec(
 ```
 
 
+### Autonomous Agents
+
+**Agents** are emerging in production as LLMs mature in key capabilities—understanding complex inputs, engaging in reasoning and planning, using tools reliably, and recovering from errors.
+
+```mermaid
+flowchart LR
+    H([Human]) <-.-> TA[Agent] -.-> S([Stop])
+
+    subgraph TA[Agent]
+        A[Agent]
+        A --> |Action| E([Environment])
+        E --> |Feedback| A
+    end
+
+    style H fill:#ffb3ba,stroke-width:0px;
+    style A fill:#baffc9,stroke-width:0px;
+    style E fill:#ffb3ba,stroke-width:0px;
+    style TA fill:#fff,stroke:#000,stroke-width:1px,stroke-dasharray: 2 2
+```
+
+**When to use agents:** Agents can be used for open-ended problems where it’s difficult or impossible to predict the required number of steps, and where you can’t hardcode a fixed path. The Agent will potentially operate for many turns, and you must have some level of trust in its decision-making. Agents' autonomy makes them ideal for scaling tasks in trusted environments.
+
+**Example** (see [examples/patterns/autonomous_agent.py](examples/patterns/autonomous_agent.py) for a runnable example):
+
+```python
+from coagent.agents import Model
+from coagent.agents.react_agent import ReActAgent, RunContext
+from coagent.core import AgentSpec, new
+
+async def get_current_city(ctx: RunContext) -> str:
+    """Get the current city."""
+    ctx.report_progress(message="Getting the current city...")
+    return "Beijing"
+
+
+async def query_weather(ctx: RunContext, city: str) -> str:
+    """Query the weather in the given city."""
+    ctx.report_progress(message=f"Querying the weather in {city}...")
+    return f"The weather in {city} is sunny."
+
+
+reporter = AgentSpec(
+    "reporter",
+    new(
+        ReActAgent,
+        name="weporter",
+        system="You are a helpful weather reporter",
+        model=Model(...),
+        tools=[get_current_city, query_weather],
+    ),
+)
+```
+
+
 ## Examples
 
 - [patterns](examples/patterns)
