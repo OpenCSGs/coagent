@@ -106,8 +106,13 @@ class ReActAgent(BaseAgent):
 
         loop = AgentLoop(self)
         result = loop.run(input=input, data=data)
-        async for item in result.stream_events():
-            yield OutputMessage(item=item)  # type: ignore
+
+        try:
+            async for item in result.stream_events():
+                yield OutputMessage(item=item)  # type: ignore
+        except asyncio.CancelledError:
+            result.cancel()  # Clean up resources.
+            raise
 
 
 DEFAULT_MAX_TURNS = 10
@@ -139,17 +144,13 @@ class StreamResult:
             if self._cancel_event.is_set():
                 break
 
-            try:
-                item = await self._queue.get()
-            except asyncio.CancelledError:
-                break
+            item = await self._queue.get()
+            self._queue.task_done()
 
             if isinstance(item, QueueCompleteSentinel):
-                self._queue.task_done()
                 break
 
             yield item
-            self._queue.task_done()
 
 
 class AgentLoop:
