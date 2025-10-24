@@ -33,7 +33,7 @@ reporter = AgentSpec(
     "reporter",
     new(
         ReActAgent,
-        name="weporter",
+        name="reporter",
         system="You are a helpful weather reporter",
         model=Model(
             id=os.getenv("MODEL_ID"),
