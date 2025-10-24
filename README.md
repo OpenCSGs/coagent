@@ -11,7 +11,8 @@ An open-source framework for building monolithic or distributed agentic systems,
 
 ## Latest Updates
 
-- 🚀 **2025-07-18**: Added support for [A2A](https://a2a-protocol.org/), check out the [example](examples/a2a).
+- 🚀 **2025-10-24**: Added support for [ReAct](https://arxiv.org/abs/2210.03629) agents, check out [Autonomous Agents](#autonomous-agents).
+- **2025-07-18**: Added support for [A2A](https://a2a-protocol.org/), check out the [example](examples/a2a).
 - **2025-02-08**: Added support for [DeepSeek-R1](https://api-docs.deepseek.com/news/news250120), check out the [example](examples/deepseek-r1).
 - **2025-01-28**: Added support for [Structured Outputs][2].
 - **2025-01-22**: Added support for [Model Context Protocol][3].
@@ -29,7 +30,7 @@ An open-source framework for building monolithic or distributed agentic systems,
 - [x] Single-agent
     - [x] [Function calling](https://platform.openai.com/docs/guides/function-calling)
     - [x] [Structured Outputs][2] ([example](examples/structured-outputs))
-    - [ ] ReAct
+    - [x] ReAct agents ([example](examples/patterns/autonomous_agent.py))
 - [x] Multi-agent orchestration
     - [x] Agent Discovery
     - [x] Static orchestration
