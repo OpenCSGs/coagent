@@ -566,6 +566,7 @@ reporter = AgentSpec(
 
 - [patterns](examples/patterns)
 - [a2a](examples/a2a)
+- [react-mcp](examples/react-mcp)
 - [mcp](examples/mcp)
 - [mcp-new](examples/mcp-new)
 - [structured-outputs](examples/structured-outputs)
