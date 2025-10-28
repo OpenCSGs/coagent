@@ -10,8 +10,10 @@ from coagent.core import (
     BaseAgent,
     Context,
     handler,
+    logger,
 )
 from coagent.core.util import get_func_args, pretty_trace_tool_call
+import mcputil
 from openai.types.responses import (
     EasyInputMessageParam,
     ResponseOutputText,
@@ -94,6 +96,33 @@ class ReActAgent(BaseAgent):
     @property
     def model_settings(self) -> ModelSettings:
         return self._model_settings
+
+    async def started(self) -> None:
+        # Extract MCP clients from tools list
+        mcp_clients = [tool for tool in self._tools if isinstance(tool, mcputil.Client)]
+
+        # Filter out MCP clients from tools list
+        self._tools = [
+            tool for tool in self._tools if not isinstance(tool, mcputil.Client)
+        ]
+
+        # Load tools from all MCP clients concurrently
+        async def get_client_tools(client):
+            try:
+                return await client.get_tools()
+            except Exception as exc:
+                # Log error but continue with empty tools list
+                logger.error(f"Error getting tools from MCP client: {exc}")
+                return []
+
+        # Fetch all tools concurrently and flatten the results
+        all_mcp_tools = await asyncio.gather(
+            *[get_client_tools(client) for client in mcp_clients]
+        )
+
+        # Add all tools to the tools list
+        for mcp_tools in all_mcp_tools:
+            self._tools.extend(mcp_tools)
 
     @handler
     async def handle_history(
@@ -312,32 +341,58 @@ class AgentLoop:
         args = {k: v for k, v in args.items() if k in want_arg_names}
         pretty_trace_tool_call(f"Actual Call: {name}", args)
 
+        tool_ctx = RunContext.with_tool(
+            ctx,
+            name=function_call.name,
+            call_id=function_call.call_id,
+            arguments=function_call.arguments,
+        )
         # TODO: Check by argument types instead of names. E.g. `ctx` could be a `RunContext`.
         if __CTX_VARS_NAME__ in want_arg_names:
-            args[__CTX_VARS_NAME__] = RunContext.with_tool(
-                ctx,
-                name=function_call.name,
-                call_id=function_call.call_id,
-                arguments=function_call.arguments,
+            args[__CTX_VARS_NAME__] = tool_ctx
+
+        if isinstance(func, mcputil.Tool):
+            result: mcputil.Result = await func.call(
+                call_id=function_call.call_id, **args
             )
-
-        raw_result = func(**args)
-        if inspect.isawaitable(raw_result):
-            result = await raw_result
+            async for event in result.events():
+                if isinstance(event, mcputil.ProgressEvent):
+                    # Report progress to the context.
+                    tool_ctx.report_progress(
+                        progress=event.progress or 0,
+                        total=event.total or 0,
+                        message=event.message or "",
+                    )
+                elif isinstance(event, mcputil.OutputEvent):
+                    return ToolCallOutputItem(
+                        raw_item=ResponseFunctionToolCallOutputItem(
+                            id="",
+                            call_id=function_call.call_id,
+                            output=str(event.output),
+                            type="function_call_output",
+                            status="completed",
+                        ),
+                        output=event.output,
+                        type="tool_call_output_item",
+                    )
         else:
-            result = raw_result
+            raw_result = func(**args)
+            if inspect.isawaitable(raw_result):
+                result = await raw_result
+            else:
+                result = raw_result
 
-        return ToolCallOutputItem(
-            raw_item=ResponseFunctionToolCallOutputItem(
-                id="",
-                call_id=function_call.call_id,
-                output=str(result),
-                type="function_call_output",
-                status="completed",
-            ),
-            output=result,
-            type="tool_call_output_item",
-        )
+            return ToolCallOutputItem(
+                raw_item=ResponseFunctionToolCallOutputItem(
+                    id="",
+                    call_id=function_call.call_id,
+                    output=str(result),
+                    type="function_call_output",
+                    status="completed",
+                ),
+                output=result,
+                type="tool_call_output_item",
+            )
 
     async def get_chat_completion(
         self,

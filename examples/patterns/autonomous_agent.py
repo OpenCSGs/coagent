@@ -51,7 +51,7 @@ async def main():
 
         result = await reporter.run(
             InputHistory(
-                messages=[InputMessage(role="user", content="What's the weather?")]
+                messages=[InputMessage(role="user", content="What's the weather like?")]
             ).encode(),
             stream=True,
         )
