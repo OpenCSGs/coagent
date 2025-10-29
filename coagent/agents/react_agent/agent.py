@@ -41,6 +41,7 @@ from .types import (
 from .messages import InputHistory, OutputMessage
 from ..model import default_model, Model
 from .converter import Converter
+from .subagent import Subagent, SubagentTool
 
 FAKE_ID = "__fake_id__"
 
@@ -98,15 +99,36 @@ class ReActAgent(BaseAgent):
         return self._model_settings
 
     async def started(self) -> None:
-        # Extract MCP clients from tools list
-        mcp_clients = [tool for tool in self._tools if isinstance(tool, mcputil.Client)]
+        final_tools: list[Callable] = []
 
-        # Filter out MCP clients from tools list
-        self._tools = [
-            tool for tool in self._tools if not isinstance(tool, mcputil.Client)
+        mcp_clients: list[mcputil.Client] = []
+        subagents: list[Subagent] = []
+
+        for tool in self._tools:
+            if isinstance(tool, mcputil.Client):
+                mcp_clients.append(tool)
+            elif isinstance(tool, Subagent):
+                subagents.append(tool)
+            else:
+                final_tools.append(tool)
+
+        # Load tools from MCP clients
+        mcp_tools = await self._load_mcp_tools(mcp_clients)
+        final_tools.extend(mcp_tools)
+
+        # Create tools from subagents
+        subagent_tools = [
+            SubagentTool(self, subagent).as_tool() for subagent in subagents
         ]
+        final_tools.extend(subagent_tools)
 
-        # Load tools from all MCP clients concurrently
+        self._tools = final_tools
+
+    async def _load_mcp_tools(
+        self, mcp_clients: list[mcputil.Client]
+    ) -> list[Callable]:
+        """Load tools from all MCP clients concurrently."""
+
         async def get_client_tools(client):
             try:
                 return await client.get_tools()
@@ -120,9 +142,7 @@ class ReActAgent(BaseAgent):
             *[get_client_tools(client) for client in mcp_clients]
         )
 
-        # Add all tools to the tools list
-        for mcp_tools in all_mcp_tools:
-            self._tools.extend(mcp_tools)
+        return [tool for sublist in all_mcp_tools for tool in sublist]
 
     @handler
     async def handle_history(

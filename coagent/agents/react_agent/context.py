@@ -6,7 +6,7 @@ from typing import Any, Generic
 
 from typing_extensions import TypeVar
 
-from .types import FunctionToolCallProgressItem, ToolCallProgressItem
+from .types import FunctionToolCallProgressItem, ToolCallProgressItem, StreamEvent
 
 TData = TypeVar("TData", default=Any)
 
@@ -42,6 +42,17 @@ class RunContext(Generic[TData]):
         )
 
     @property
+    def full_tool_name(self) -> str:
+        if not self.tool:
+            return ""
+
+        name = self.tool.name
+        if self.parent and self.parent.full_tool_name:
+            name = f"{self.parent.full_tool_name}/{name}"
+
+        return name
+
+    @property
     def data(self) -> TData | None:
         """Get the underlying data object."""
         if self._data:
@@ -73,6 +84,10 @@ class RunContext(Generic[TData]):
             ),
             type="tool_call_progress_item",
         )
+        self.put_event(event)
+
+    def put_event(self, event: StreamEvent) -> None:
+        """Put an event into the event queue."""
         if self.queue:
             self.queue.put_nowait(event)
 
