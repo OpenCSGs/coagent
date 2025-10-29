@@ -2,7 +2,6 @@ from datetime import datetime
 import inspect
 import typing
 
-import mcputil
 from pydantic import Field, create_model
 from pydantic.fields import FieldInfo
 
@@ -139,11 +138,7 @@ def function_to_jsonschema(func) -> dict:
 
     # Construct the pydantic mdoel for the _under_fn's function signature parameters.
     # 1. Get the function signature.
-
-    if isinstance(func, mcputil.Tool):
-        sig = func.__sig__
-    else:
-        sig = inspect.signature(func)
+    sig = inspect.signature(func)
 
     # 2. Create a dictionary of field definitions for the Pydantic model
     fields = {}
