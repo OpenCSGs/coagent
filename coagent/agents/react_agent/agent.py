@@ -38,6 +38,7 @@ from .types import (
     MessageOutputItem,
     StreamEvent,
 )
+from .mcp import MCPTools
 from .messages import InputHistory, OutputMessage
 from ..model import default_model, Model
 from .converter import Converter
@@ -101,19 +102,19 @@ class ReActAgent(BaseAgent):
     async def started(self) -> None:
         final_tools: list[Callable] = []
 
-        mcp_clients: list[mcputil.Client] = []
+        mcp_loaders: list[MCPTools] = []
         subagents: list[Subagent] = []
 
         for tool in self._tools:
-            if isinstance(tool, mcputil.Client):
-                mcp_clients.append(tool)
+            if isinstance(tool, MCPTools):
+                mcp_loaders.append(tool)
             elif isinstance(tool, Subagent):
                 subagents.append(tool)
             else:
                 final_tools.append(tool)
 
-        # Load tools from MCP clients
-        mcp_tools = await self._load_mcp_tools(mcp_clients)
+        # Load tools from MCP loaders
+        mcp_tools = await self._load_mcp_tools(mcp_loaders)
         final_tools.extend(mcp_tools)
 
         # Create tools from subagents
@@ -124,14 +125,12 @@ class ReActAgent(BaseAgent):
 
         self._tools = final_tools
 
-    async def _load_mcp_tools(
-        self, mcp_clients: list[mcputil.Client]
-    ) -> list[Callable]:
+    async def _load_mcp_tools(self, mcp_loaders: list[MCPTools]) -> list[mcputil.Tool]:
         """Load tools from all MCP clients concurrently."""
 
-        async def get_client_tools(client):
+        async def load_tools(loader: MCPTools) -> list[mcputil.Tool]:
             try:
-                return await client.get_tools()
+                return await loader.load()
             except Exception as exc:
                 # Log error but continue with empty tools list
                 logger.error(f"Error getting tools from MCP client: {exc}")
@@ -139,7 +138,7 @@ class ReActAgent(BaseAgent):
 
         # Fetch all tools concurrently and flatten the results
         all_mcp_tools = await asyncio.gather(
-            *[get_client_tools(client) for client in mcp_clients]
+            *[load_tools(loader) for loader in mcp_loaders]
         )
 
         return [tool for sublist in all_mcp_tools for tool in sublist]

@@ -4,6 +4,7 @@ from coagent.agents.react_agent import (
     InputMessage,
     InputHistory,
     OutputMessage,
+    MCPTools,
     MessageOutputItem,
     ToolCallItem,
     ToolCallOutputItem,
@@ -32,7 +33,7 @@ async def main():
                     ReActAgent,
                     name="reporter",
                     system="You are a helpful weather reporter",
-                    tools=[mcp_client],
+                    tools=[MCPTools(mcp_client)],
                 ),
             )
             await runtime.register(reporter)
