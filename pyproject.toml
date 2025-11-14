@@ -1,6 +1,6 @@
 [project]
 name = "coagent-python"
-version = "0.0.8"
+version = "0.0.9"
 description = "An open-source framework for building monolithic or distributed agentic systems, ranging from simple LLM calls to compositional workflows and autonomous agents."
 authors = [
     { name = "RussellLuo", email = "luopeng.he@gmail.com" },
@@ -9,7 +9,7 @@ requires-python = ">=3.10"
 
 [tool.poetry]
 name = "coagent-python"
-version = "0.0.8"
+version = "0.0.9"
 description = "An open-source framework for building monolithic or distributed agentic systems, ranging from simple LLM calls to compositional workflows and autonomous agents."
 authors = [
     "RussellLuo <luopeng.he@gmail.com>",
@@ -38,7 +38,7 @@ litellm = "1.60.4"
 mcp = ">=1.19.0"
 jinja2 = "3.1.5"
 aiorwlock = ">=1.5.0"
-mcputil = "0.3.0"
+mcputil = ">=0.4.0"
 
 # A list of optional dependencies, which are included in the
 # below `extras`.

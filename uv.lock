@@ -282,7 +282,7 @@ wheels = [
 
 [[package]]
 name = "coagent-python"
-version = "0.0.7"
+version = "0.0.9"
 source = { editable = "." }
 dependencies = [
     { name = "aiorwlock" },
@@ -295,6 +295,7 @@ dependencies = [
     { name = "litellm" },
     { name = "loguru" },
     { name = "mcp" },
+    { name = "mcputil" },
     { name = "nats-py" },
     { name = "openai" },
     { name = "pydantic" },
@@ -333,6 +334,7 @@ requires-dist = [
     { name = "litellm", specifier = "==1.60.4" },
     { name = "loguru", specifier = "==0.7.3" },
     { name = "mcp", specifier = ">=1.19.0" },
+    { name = "mcputil", specifier = ">=0.4.0" },
     { name = "nats-py", specifier = "==2.9.0" },
     { name = "openai", specifier = ">=2.2,<3" },
     { name = "pydantic", specifier = ">=2.7.0" },
@@ -989,7 +991,7 @@ wheels = [
 
 [[package]]
 name = "jsonschema"
-version = "4.23.0"
+version = "4.25.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -997,9 +999,9 @@ dependencies = [
     { name = "referencing" },
     { name = "rpds-py" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/2e/03362ee4034a4c917f697890ccd4aec0800ccf9ded7f511971c75451deec/jsonschema-4.23.0.tar.gz", hash = "sha256:d71497fef26351a33265337fa77ffeb82423f3ea21283cd9467bb03999266bc4", size = 325778, upload-time = "2024-07-08T18:40:05.546Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/74/69/f7185de793a29082a9f3c7728268ffb31cb5095131a9c139a74078e27336/jsonschema-4.25.1.tar.gz", hash = "sha256:e4a9655ce0da0c0b67a085847e00a3a51449e1157f4f75e9fb5aa545e122eb85", size = 357342, upload-time = "2025-08-18T17:03:50.038Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/69/4a/4f9dbeb84e8850557c02365a0eee0649abe5eb1d84af92a25731c6c0f922/jsonschema-4.23.0-py3-none-any.whl", hash = "sha256:fbadb6f8b144a8f8cf9f0b89ba94501d143e50411a1278633f56a7acf7fd5566", size = 88462, upload-time = "2024-07-08T18:40:00.165Z" },
+    { url = "https://files.pythonhosted.org/packages/bf/9c/8c95d856233c1f82500c2450b8c68576b4cf1c871db3afac5c34ff84e6fd/jsonschema-4.25.1-py3-none-any.whl", hash = "sha256:3fba0169e345c7175110351d456342c364814cfcf3b964ba4587f22915230a63", size = 90040, upload-time = "2025-08-18T17:03:48.373Z" },
 ]
 
 [[package]]
@@ -1159,6 +1161,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/69/2b/916852a5668f45d8787378461eaa1244876d77575ffef024483c94c0649c/mcp-1.19.0.tar.gz", hash = "sha256:213de0d3cd63f71bc08ffe9cc8d4409cc87acffd383f6195d2ce0457c021b5c1", size = 444163, upload-time = "2025-10-24T01:11:15.839Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ce/a3/3e71a875a08b6a830b88c40bc413bff01f1650f1efe8a054b5e90a9d4f56/mcp-1.19.0-py3-none-any.whl", hash = "sha256:f5907fe1c0167255f916718f376d05f09a830a215327a3ccdd5ec8a519f2e572", size = 170105, upload-time = "2025-10-24T01:11:14.151Z" },
+]
+
+[[package]]
+name = "mcputil"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "aiorwlock" },
+    { name = "jsonschema" },
+    { name = "mcp" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ec/7d/4ea1bff48fb7750c7833d910f131bc77bf9b11841ac3e1bd509b436c90cf/mcputil-0.4.0.tar.gz", hash = "sha256:61a7d6691ab7ffa04ddf2bdd94bb30b031838bee462cf9bf396fe16a30ae4964", size = 39881, upload-time = "2025-11-14T08:19:42.975Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8d/a9/f19c82b042b604576b7be966b705c86e0b6332eb47ba847addeb56056028/mcputil-0.4.0-py3-none-any.whl", hash = "sha256:205d6fd6f5a6b7ba77327359434cabe273c73882ccbd8f9f3e2e1832133bce7a", size = 9736, upload-time = "2025-11-14T08:19:41.824Z" },
 ]
 
 [[package]]
