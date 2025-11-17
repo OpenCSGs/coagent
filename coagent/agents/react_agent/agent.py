@@ -374,32 +374,60 @@ class AgentLoop:
             result: mcputil.Result = await func.call(
                 call_id=function_call.call_id, **args
             )
-            async for event in result.events():
-                if isinstance(event, mcputil.ProgressEvent):
-                    # Report progress to the context.
-                    tool_ctx.report_progress(
-                        progress=event.progress or 0,
-                        total=event.total or 0,
-                        message=event.message or "",
-                    )
-                elif isinstance(event, mcputil.OutputEvent):
-                    return ToolCallOutputItem(
-                        raw_item=ResponseFunctionToolCallOutputItem(
-                            id="",
-                            call_id=function_call.call_id,
-                            output=str(event.output),
-                            type="function_call_output",
-                            status="completed",
-                        ),
-                        output=event.output,
-                        type="tool_call_output_item",
-                    )
+            try:
+                async for event in result.events():
+                    if isinstance(event, mcputil.ProgressEvent):
+                        # Report progress to the context.
+                        tool_ctx.report_progress(
+                            progress=event.progress or 0,
+                            total=event.total or 0,
+                            message=event.message or "",
+                        )
+                    elif isinstance(event, mcputil.OutputEvent):
+                        return ToolCallOutputItem(
+                            raw_item=ResponseFunctionToolCallOutputItem(
+                                id="",
+                                call_id=function_call.call_id,
+                                output=str(event.output),
+                                type="function_call_output",
+                                status="completed",
+                            ),
+                            output=event.output,
+                            type="tool_call_output_item",
+                        )
+            except Exception as exc:
+                # Handle tool exceptions and report them as incomplete outputs.
+                return ToolCallOutputItem(
+                    raw_item=ResponseFunctionToolCallOutputItem(
+                        id="",
+                        call_id=function_call.call_id,
+                        output=str(exc),
+                        type="function_call_output",
+                        status="incomplete",
+                    ),
+                    output=str(exc),
+                    type="tool_call_output_item",
+                )
         else:
-            raw_result = func(**args)
-            if inspect.isawaitable(raw_result):
-                result = await raw_result
-            else:
-                result = raw_result
+            try:
+                raw_result = func(**args)
+                if inspect.isawaitable(raw_result):
+                    result = await raw_result
+                else:
+                    result = raw_result
+            except Exception as exc:
+                # Handle tool exceptions and report them as incomplete outputs.
+                return ToolCallOutputItem(
+                    raw_item=ResponseFunctionToolCallOutputItem(
+                        id="",
+                        call_id=function_call.call_id,
+                        output=str(exc),
+                        type="function_call_output",
+                        status="incomplete",
+                    ),
+                    output=str(exc),
+                    type="tool_call_output_item",
+                )
 
             return ToolCallOutputItem(
                 raw_item=ResponseFunctionToolCallOutputItem(
