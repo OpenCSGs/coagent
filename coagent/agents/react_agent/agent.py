@@ -449,7 +449,11 @@ class AgentLoop:
         response_format: dict | None = None,
     ) -> AsyncIterator[ChatCompletionChunk]:
         context_variables = defaultdict(str, context_variables)
-        messages = Converter.items_to_messages(history)
+        try:
+            messages = Converter.items_to_messages(history)
+        except Exception as exc:
+            yield self.create_chunk(f"Failed to convert items to messages: {exc}")
+            return
 
         if self.agent.system:
             messages.insert(
@@ -460,7 +464,12 @@ class AgentLoop:
                 },
             )
 
-        tools = [function_to_jsonschema(tool) for tool in self.agent.tools]
+        try:
+            tools = [function_to_jsonschema(tool) for tool in self.agent.tools]
+        except Exception as exc:
+            yield self.create_chunk(f"Failed to convert tools to JSON schema: {exc}")
+            return
+
         # hide context_variables from model
         for tool in tools:
             params = tool["function"]["parameters"]
@@ -492,20 +501,22 @@ class AgentLoop:
         except Exception as exc:
             # Return the error in form of a completion chunk.
             model = self.agent.model.id
-            chunk = ChatCompletionChunk(
-                id=FAKE_ID,
-                choices=[
-                    Choice(
-                        delta=ChoiceDelta(
-                            role="assistant",
-                            content=f"Failed to chat with {model}: {exc}",
-                        ),
-                        finish_reason="stop",
-                        index=0,
-                    )
-                ],
-                created=int(time.time()),
-                model=model,
-                object="chat.completion.chunk",
-            )
-            yield chunk
+            yield self.create_chunk(f"Failed to chat with {model}: {exc}")
+
+    def create_chunk(self, content: str) -> ChatCompletionChunk:
+        return ChatCompletionChunk(
+            id=FAKE_ID,
+            choices=[
+                Choice(
+                    delta=ChoiceDelta(
+                        role="assistant",
+                        content=content,
+                    ),
+                    finish_reason="stop",
+                    index=0,
+                )
+            ],
+            created=int(time.time()),
+            model=self.agent.model.id,
+            object="chat.completion.chunk",
+        )
