@@ -1224,13 +1224,13 @@ ws = ["websockets (>=15.0.1)"]
 
 [[package]]
 name = "mcputil"
-version = "0.4.0"
+version = "0.5.0"
 description = "A lightweight library that converts MCP tools into Python tools (function-like objects)."
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "mcputil-0.4.0-py3-none-any.whl", hash = "sha256:205d6fd6f5a6b7ba77327359434cabe273c73882ccbd8f9f3e2e1832133bce7a"},
-    {file = "mcputil-0.4.0.tar.gz", hash = "sha256:61a7d6691ab7ffa04ddf2bdd94bb30b031838bee462cf9bf396fe16a30ae4964"},
+    {file = "mcputil-0.5.0-py3-none-any.whl", hash = "sha256:ecc46dba801d42d951bdfc2a54687adbe555a65c1feebd009322644abe6df4bf"},
+    {file = "mcputil-0.5.0.tar.gz", hash = "sha256:4947f0565fbe64233598332e3fc03d9b639f9470bda01e1d3791b29b6022f5a6"},
 ]
 
 [package.dependencies]
@@ -2517,4 +2517,4 @@ a2a = ["a2a-sdk", "sse-starlette", "starlette"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10.0,<3.14"
-content-hash = "127fd7cd19604f8cb114e29bf638e65647abd2344d3cfd39258e1988f118433c"
+content-hash = "76eded37103b696b7c88c6183fbe08a132e6eb235bcc70950c4c45e3438cd675"
