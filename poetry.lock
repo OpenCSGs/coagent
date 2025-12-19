@@ -2517,4 +2517,4 @@ a2a = ["a2a-sdk", "sse-starlette", "starlette"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10.0,<3.14"
-content-hash = "a81f7793d57fbb13f8d3491bc62983522c2f87cd4eaec1b9bca6fa59168cc684"
+content-hash = "7d835d41384d97b61aa9df6ffdf033cc30e80300034c89010095dae153d3dc9d"
