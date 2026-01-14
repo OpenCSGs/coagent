@@ -2,7 +2,15 @@
 from .agent import ReActAgent
 from .context import RunContext
 from .mcp import MCPTools
-from .messages import InputMessage, InputHistory, OutputMessage
+from .messages import (
+    InputMessage,
+    InputHistory,
+    OutputMessage,
+    InputMessageTextParam,
+    InputMessageImageParam,
+    InputMessageFileParam,
+    InputMessageAudioParam,
+)
 from .types import (
     MessageOutputItem,
     ToolCallItem,

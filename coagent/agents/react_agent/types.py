@@ -11,6 +11,12 @@ from openai.types.responses import (
     ResponseFunctionToolCall,
     ResponseFunctionToolCallOutputItem,
 )
+from openai.types.responses.response_input_message_content_list_param import (
+    ResponseInputTextParam, # noqa: F401
+    ResponseInputImageParam, # noqa: F401
+    ResponseInputFileParam, # noqa: F401
+    ResponseInputAudioParam # noqa: F401
+)
 from openai.types.responses.response_reasoning_item import ResponseReasoningItem
 from pydantic import BaseModel
 
